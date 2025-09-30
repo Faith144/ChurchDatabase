@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Members - Church Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-users me-2"></i>Members
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button class="btn btn-sm btn-outline-secondary" id="exportMembers">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+        </div>
+        <button class="btn btn-primary" id="addMemberBtn">
+            <i class="fas fa-user-plus me-1"></i>Add Member
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Assembly</label>
+                <select class="form-select" id="assemblyFilter">
+                    <option value="">All Assemblies</option>
+                    {% for assembly in assemblies %}
+                    <option value="{{ assembly.id }}" {% if request.GET.assembly == assembly.id|stringformat:"i" %}selected{% endif %}>
+                        {{ assembly.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Family</label>
+                <select class="form-select" id="familyFilter">
+                    <option value="">All Families</option>
+                    {% for family in families %}
+                    <option value="{{ family.id }}" {% if request.GET.family == family.id|stringformat:"i" %}selected{% endif %}>
+                        {{ family.family_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Unit</label>
+                <select class="form-select" id="unitFilter">
+                    <option value="">All Units</option>
+                    {% for unit in units %}
+                    <option value="{{ unit.id }}" {% if request.GET.unit == unit.id|stringformat:"i" %}selected{% endif %}>
+                        {{ unit.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Cell</label>
+                <select class="form-select" id="cellFilter">
+                    <option value="">All Cells</option>
+                    {% for cell in cells %}
+                    <option value="{{ cell.id }}" {% if request.GET.cell == cell.id|stringformat:"i" %}selected{% endif %}>
+                        {{ cell.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="ACTIVE" {% if request.GET.status == "ACTIVE" %}selected{% endif %}>Active</option>
+                    <option value="INACTIVE" {% if request.GET.status == "INACTIVE" %}selected{% endif %}>Inactive</option>
+                    <option value="NEW_MEMBER" {% if request.GET.status == "NEW_MEMBER" %}selected{% endif %}>New Member</option>
+                    <option value="VISITOR" {% if request.GET.status == "VISITOR" %}selected{% endif %}>Visitor</option>
+                </select>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchMembers" placeholder="Search members by name, email, or phone...">
+                    <button class="btn btn-outline-secondary" type="button" id="clearFilters">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Members Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <span id="memberCount">{{ members.paginator.count }}</span> Members Found
+        </h5>
+        <div class="d-flex align-items-center">
+            <small class="text-muted me-3">Show:</small>
+            <select class="form-select form-select-sm" id="pageSize" style="width: auto;">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="selectAll">
+                        </th>
+                        <th>Name</th>
+                        <th>Contact</th>
+                        <th>Assembly</th>
+                        <th>Family</th>
+                        <th>Unit/Cell</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="membersTable">
+                    {% for member in members %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="member-checkbox" value="{{ member.id }}">
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if member.photo %}
+                                <img src="{{ member.photo.url }}" alt="{{ member.first_name }}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ member.first_name }} {{ member.last_name }}</strong>
+                                    {% if member.middle_name %}<br><small class="text-muted">{{ member.middle_name }}</small>{% endif %}
+                                    {% if member.date_of_birth %}<br><small class="text-muted">Age: {{ member.age }}</small>{% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if member.email %}<div><i class="fas fa-envelope text-muted me-1"></i> {{ member.email }}</div>{% endif %}
+                            {% if member.phone %}<div><i class="fas fa-phone text-muted me-1"></i> {{ member.phone }}</div>{% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">{{ member.assembly.name }}</span>
+                        </td>
+                        <td>
+                            {% if member.family %}
+                            <span class="badge bg-success">{{ member.family.family_name }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>
+                                {% if member.unit %}<span class="badge bg-info">{{ member.unit.name }}</span>{% endif %}
+                                {% if member.cell %}<span class="badge bg-warning">{{ member.cell.name }}</span>{% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if member.membership_status == 'ACTIVE' %}bg-success{% elif member.membership_status == 'NEW_MEMBER' %}bg-info{% else %}bg-warning{% endif %}">
+                                {{ member.membership_status }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary view-member" data-member-id="{{ member.id }}" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-warning edit-member" data-member-id="{{ member.id }}" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger delete-member" 
+                                        data-member-id="{{ member.id }}"
+                                        data-member-name="{{ member.first_name }} {{ member.last_name }}"
+                                        title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No members found</h5>
+                            <p class="text-muted">Try adjusting your filters or add a new member.</p>
+                            <button class="btn btn-primary" id="addMemberBtnEmpty">
+                                <i class="fas fa-user-plus me-1"></i>Add First Member
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if members.paginator.num_pages > 1 %}
+        <nav aria-label="Members pagination">
+            <ul class="pagination justify-content-center">
+                {% if members.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ members.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in members.paginator.page_range %}
+                    {% if members.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if members.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ members.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bulk Actions -->
+<div class="card mt-3" id="bulkActions" style="display: none;">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <span id="selectedCount">0</span> members selected
+            <div class="btn-group">
+                <button class="btn btn-outline-success btn-sm" id="bulkAssignFamily">
+                    <i class="fas fa-users me-1"></i>Assign to Family
+                </button>
+                <button class="btn btn-outline-info btn-sm" id="bulkAssignUnit">
+                    <i class="fas fa-layer-group me-1"></i>Assign to Unit
+                </button>
+                <button class="btn btn-outline-warning btn-sm" id="bulkAssignCell">
+                    <i class="fas fa-home me-1"></i>Assign to Cell
+                </button>
+                <button class="btn btn-outline-danger btn-sm" id="bulkDelete">
+                    <i class="fas fa-trash me-1"></i>Delete Selected
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Filter functionality
+        $('#assemblyFilter, #familyFilter, #unitFilter, #cellFilter, #statusFilter').change(function() {
+            applyFilters();
+        });
+
+        $('#searchMembers').on('input', function() {
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(applyFilters, 500);
+        });
+
+        $('#clearFilters').click(function() {
+            $('#assemblyFilter, #familyFilter, #unitFilter, #cellFilter, #statusFilter').val('');
+            $('#searchMembers').val('');
+            applyFilters();
+        });
+
+        function applyFilters() {
+            const params = new URLSearchParams();
+            
+            const assembly = $('#assemblyFilter').val();
+            const family = $('#familyFilter').val();
+            const unit = $('#unitFilter').val();
+            const cell = $('#cellFilter').val();
+            const status = $('#statusFilter').val();
+            const search = $('#searchMembers').val();
+            const pageSize = $('#pageSize').val();
+
+            if (assembly) params.set('assembly', assembly);
+            if (family) params.set('family', family);
+            if (unit) params.set('unit', unit);
+            if (cell) params.set('cell', cell);
+            if (status) params.set('status', status);
+            if (search) params.set('search', search);
+            if (pageSize) params.set('page_size', pageSize);
+
+            window.location.href = '?' + params.toString();
+        }
+
+        // Bulk selection
+        $('#selectAll').change(function() {
+            $('.member-checkbox').prop('checked', this.checked);
+            updateBulkActions();
+        });
+
+        $('.member-checkbox').change(function() {
+            updateBulkActions();
+        });
+
+        function updateBulkActions() {
+            const selectedCount = $('.member-checkbox:checked').length;
+            $('#selectedCount').text(selectedCount);
+            
+            if (selectedCount > 0) {
+                $('#bulkActions').show();
+                $('#selectAll').prop('checked', selectedCount === $('.member-checkbox').length);
+            } else {
+                $('#bulkActions').hide();
+            }
+        }
+        // Export functionality
+        $('#exportMembers').click(function() {
+            const params = new URLSearchParams(window.location.search);
+            params.set('export', 'csv');
+            window.location.href = '?' + params.toString();
+        });
+
+        // Initialize
+        updateBulkActions();
+    });
+</script>
+
+<div id="modalContainer"></div>
+{% endblock %}

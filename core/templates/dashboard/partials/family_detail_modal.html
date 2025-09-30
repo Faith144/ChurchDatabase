@@ -1,0 +1,312 @@
+<div class="modal fade" id="familyDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Family Details: {{ family.family_name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Family Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Family Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width: 120px;">Family Name:</td>
+                                <td><strong>{{ family.family_name }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Assembly:</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ family.assembly.name }}</span>
+                                </td>
+                            </tr>
+                            {% if family.phone %}
+                            <tr>
+                                <td class="text-muted">Phone:</td>
+                                <td>
+                                    <i class="fas fa-phone text-muted me-2"></i>
+                                    {{ family.phone }}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% if family.email %}
+                            <tr>
+                                <td class="text-muted">Email:</td>
+                                <td>
+                                    <i class="fas fa-envelope text-muted me-2"></i>
+                                    {{ family.email }}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td class="text-muted">Total Members:</td>
+                                <td>
+                                    <span class="badge bg-success">{{ family_members|length }}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Contact Information</h6>
+                        {% if family.address %}
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Address:</small>
+                            <p class="mb-0">{{ family.address|linebreaksbr }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if family.notes %}
+                        <div class="mt-3">
+                            <small class="text-muted d-block">Notes:</small>
+                            <p class="mb-0 text-muted small">{{ family.notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Family Members -->
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3">Family Members ({{ family_members|length }})</h6>
+                        
+                        {% if family_members %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Gender</th>
+                                        <th>Date of Birth</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for member in family_members %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ member.first_name }} {{ member.last_name }}</strong>
+                                            {% if member.middle_name %}({{ member.middle_name }}){% endif %}
+                                        </td>
+                                        <td>
+                                            {% if member.gender == 'M' %}
+                                                <span class="badge bg-info">Male</span>
+                                            {% elif member.gender == 'F' %}
+                                                <span class="badge bg-pink">Female</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Other</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if member.date_of_birth %}
+                                                {{ member.date_of_birth|date:"M d, Y" }}
+                                                <br>
+                                                <small class="text-muted">(Age: {{ member.age }})</small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if member.phone %}
+                                                {{ member.phone }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if member.email %}
+                                                {{ member.email }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if member.membership_status == 'ACTIVE' %}bg-success{% elif member.membership_status == 'NEW_MEMBER' %}bg-info{% else %}bg-warning{% endif %}">
+                                                {{ member.membership_status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-family-member" 
+                                                    data-member-id="{{ member.id }}"
+                                                    title="View Member">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning edit-family-member"
+                                                    data-member-id="{{ member.id }}"
+                                                    title="Edit Member">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No members found in this family.</p>
+                            <button class="btn btn-primary btn-sm" id="addMemberToFamilyBtn" data-family-id="{{ family.id }}">
+                                <i class="fas fa-user-plus me-1"></i> Add Member to Family
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body py-2">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <small class="text-muted d-block">Active Members</small>
+                                        <strong class="text-success">
+                                            {{ family_members|length|default:0 }}
+                                        </strong>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted d-block">Male</small>
+                                        <strong>
+                                            {% with male_count=family_members|length|default:0 %}
+                                                {{ family_members|dictsort:"gender"|join:""|default:0 }}
+                                            {% endwith %}
+                                        </strong>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted d-block">Female</small>
+                                        <strong>
+                                            {% with female_count=family_members|length|default:0 %}
+                                                {{ family_members|dictsort:"gender"|join:""|default:0 }}
+                                            {% endwith %}
+                                        </strong>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted d-block">Created</small>
+                                        <strong>{{ family.created_at|date:"M d, Y" }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning edit-family" data-family-id="{{ family.id }}">
+                    <i class="fas fa-edit me-1"></i> Edit Family
+                </button>
+                <button type="button" class="btn btn-success" id="addNewMemberBtn" data-family-id="{{ family.id }}">
+                    <i class="fas fa-user-plus me-1"></i> Add New Member
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-pink {
+        background-color: #e83e8c !important;
+    }
+    .table-sm td, .table-sm th {
+        padding: 0.5rem;
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        // View family member details
+        $(document).on('click', '.view-family-member', function(e) {
+            e.preventDefault();
+            const memberId = $(this).data('member-id');
+            $('#familyDetailModal').modal('hide');
+            
+            // Use the existing member view function
+            $.get(`/ajax/members/${memberId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#memberDetailModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load member details:', xhr.responseText);
+                showToast('error', 'Failed to load member details.');
+            });
+        });
+
+        // Edit family member
+        $(document).on('click', '.edit-family-member', function(e) {
+            e.preventDefault();
+            const memberId = $(this).data('member-id');
+            $('#familyDetailModal').modal('hide');
+            
+            // Use the existing member edit function
+            $.get(`/ajax/members/form/${memberId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#memberFormModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load member form:', xhr.responseText);
+                showToast('error', 'Failed to load member form.');
+            });
+        });
+
+        // Edit family
+        $(document).on('click', '.edit-family', function(e) {
+            e.preventDefault();
+            const familyId = $(this).data('family-id');
+            $('#familyDetailModal').modal('hide');
+            
+            $.get(`/ajax/families/form/${familyId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#familyFormModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load family form:', xhr.responseText);
+                showToast('error', 'Failed to load family form.');
+            });
+        });
+
+        // Add new member to this family
+        $(document).on('click', '#addNewMemberBtn, #addMemberToFamilyBtn', function(e) {
+            e.preventDefault();
+            const familyId = $(this).data('family-id');
+            $('#familyDetailModal').modal('hide');
+            
+            // Load member form with family pre-selected
+            $.get('/ajax/members/form/', function(data) {
+                $('#modalContainer').html(data.html);
+                $('#memberFormModal').modal('show');
+                
+                // Pre-select the family in the form
+                setTimeout(function() {
+                    $('#id_family').val(familyId);
+                }, 500);
+            }).fail(function(xhr) {
+                console.error('Failed to load member form:', xhr.responseText);
+                showToast('error', 'Failed to load member form.');
+            });
+        });
+
+        // Calculate gender counts (simplified version)
+        function calculateGenderCounts() {
+            let maleCount = 0;
+            let femaleCount = 0;
+            
+            $('.view-family-member').each(function() {
+                const badge = $(this).closest('tr').find('.badge');
+                if (badge.text().includes('Male')) maleCount++;
+                if (badge.text().includes('Female')) femaleCount++;
+            });
+            
+            // Update the counts in the summary card
+            $('.col-md-3:contains("Male") strong').text(maleCount);
+            $('.col-md-3:contains("Female") strong').text(femaleCount);
+        }
+
+        // Calculate counts when modal is shown
+        $('#familyDetailModal').on('shown.bs.modal', function() {
+            calculateGenderCounts();
+        });
+    });
+</script>

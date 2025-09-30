@@ -1,0 +1,65 @@
+<div class="modal fade" id="cellFormModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="cellForm" method="POST" 
+                  action="{% if cell_id %}/ajax/cells/update/{{ cell_id }}/{% else %}/ajax/cells/create/{% endif %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Cell Name *</label>
+                        {{ form.name }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Creation Date</label>
+                        {{ form.created_at }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Cell</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle cell form submission
+    $('#cellForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = $(this).serialize();
+        const url = $(this).attr('action');
+        
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#cellFormModal').modal('hide');
+                    showToast('success', response.message);
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                }
+            },
+            error: function(xhr) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.errors) {
+                        showToast('error', 'Please fix the errors in the form.');
+                    } else {
+                        showToast('error', response.error || 'An error occurred.');
+                    }
+                } catch (e) {
+                    showToast('error', 'An error occurred while processing your request.');
+                }
+            }
+        });
+    });
+</script>

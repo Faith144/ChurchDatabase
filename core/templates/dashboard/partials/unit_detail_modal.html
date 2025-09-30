@@ -1,0 +1,273 @@
+<div class="modal fade" id="unitDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Unit Details: {{ unit.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Unit Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Unit Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width: 120px;">Unit Name:</td>
+                                <td><strong>{{ unit.name }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Description:</td>
+                                <td>
+                                    {% if unit.description %}
+                                    {{ unit.description }}
+                                    {% else %}
+                                    <span class="text-muted">No description</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Leader:</td>
+                                <td>
+                                    {% if unit.leader %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                        <div>
+                                            <strong>{{ unit.leader.first_name }} {{ unit.leader.last_name }}</strong>
+                                            {% if unit.leader.phone %}<br><small class="text-muted">{{ unit.leader.phone }}</small>{% endif %}
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">No leader assigned</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Statistics</h6>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="card bg-light">
+                                    <div class="card-body py-3">
+                                        <h4 class="text-primary mb-0">{{ unit_members|length }}</h4>
+                                        <small class="text-muted">Total Members</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card bg-light">
+                                    <div class="card-body py-3">
+                                        <h4 class="text-success mb-0">
+                                            {{ unit_members|length|default:0 }}
+                                        </h4>
+                                        <small class="text-muted">Active Members</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card bg-light">
+                                    <div class="card-body py-3">
+                                        <h4 class="text-info mb-0">{{ unit.created_at|date:"M Y" }}</h4>
+                                        <small class="text-muted">Created</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unit Members -->
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3">Unit Members ({{ unit_members|length }})</h6>
+                        
+                        {% if unit_members %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Family</th>
+                                        <th>Assembly</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for member in unit_members %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if member.photo %}
+                                                <img src="{{ member.photo.url }}" alt="{{ member.first_name }}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                                {% else %}
+                                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                    <i class="fas fa-user text-white"></i>
+                                                </div>
+                                                {% endif %}
+                                                <div>
+                                                    <strong>{{ member.first_name }} {{ member.last_name }}</strong>
+                                                    {% if member.email %}<br><small class="text-muted">{{ member.email }}</small>{% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if member.family %}
+                                            <span class="badge bg-success">{{ member.family.family_name }}</span>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ member.assembly.name }}</span>
+                                        </td>
+                                        <td>
+                                            {% if member.phone %}
+                                            {{ member.phone }}
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if member.membership_status == 'ACTIVE' %}bg-success{% elif member.membership_status == 'NEW_MEMBER' %}bg-info{% else %}bg-warning{% endif %}">
+                                                {{ member.membership_status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-unit-member" 
+                                                    data-member-id="{{ member.id }}"
+                                                    title="View Member">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning edit-unit-member"
+                                                    data-member-id="{{ member.id }}"
+                                                    title="Edit Member">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No members found in this unit.</p>
+                            <button class="btn btn-primary btn-sm" id="addMemberToUnitBtn" data-unit-id="{{ unit.id }}">
+                                <i class="fas fa-user-plus me-1"></i> Add Member to Unit
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body py-2">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <small class="text-muted d-block">Created Date</small>
+                                        <strong>{{ unit.created_at|date:"M d, Y" }}</strong>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted d-block">Last Updated</small>
+                                        <strong>{{ unit.updated_at|date:"M d, Y" }}</strong>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted d-block">Male Members</small>
+                                        <strong>
+                                            {% with male_count=unit_members|length|default:0 %}
+                                                {{ unit_members|dictsort:"gender"|join:""|default:0 }}
+                                            {% endwith %}
+                                        </strong>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted d-block">Female Members</small>
+                                        <strong>
+                                            {% with female_count=unit_members|length|default:0 %}
+                                                {{ unit_members|dictsort:"gender"|join:""|default:0 }}
+                                            {% endwith %}
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning edit-unit" data-unit-id="{{ unit.id }}">
+                    <i class="fas fa-edit me-1"></i> Edit Unit
+                </button>
+                <button type="button" class="btn btn-success" id="addNewMemberToUnitBtn" data-unit-id="{{ unit.id }}">
+                    <i class="fas fa-user-plus me-1"></i> Add New Member
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // View unit member details
+        $(document).on('click', '.view-unit-member', function(e) {
+            e.preventDefault();
+            const memberId = $(this).data('member-id');
+            $('#unitDetailModal').modal('hide');
+            
+            $.get(`/ajax/members/${memberId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#memberDetailModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load member details:', xhr.responseText);
+                showToast('error', 'Failed to load member details.');
+            });
+        });
+
+        // Edit unit member
+        $(document).on('click', '.edit-unit-member', function(e) {
+            e.preventDefault();
+            const memberId = $(this).data('member-id');
+            $('#unitDetailModal').modal('hide');
+            
+            $.get(`/ajax/members/form/${memberId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#memberFormModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load member form:', xhr.responseText);
+                showToast('error', 'Failed to load member form.');
+            });
+        });
+
+        // Edit unit
+        
+
+        // Add new member to this unit
+        $(document).on('click', '#addNewMemberToUnitBtn, #addMemberToUnitBtn', function(e) {
+            e.preventDefault();
+            const unitId = $(this).data('unit-id');
+            $('#unitDetailModal').modal('hide');
+            
+            $.get('/ajax/members/form/', function(data) {
+                $('#modalContainer').html(data.html);
+                $('#memberFormModal').modal('show');
+                
+                // Pre-select the unit in the form
+                setTimeout(function() {
+                    $('#id_unit').val(unitId);
+                }, 500);
+            }).fail(function(xhr) {
+                console.error('Failed to load member form:', xhr.responseText);
+                showToast('error', 'Failed to load member form.');
+            });
+        });
+    });
+</script>

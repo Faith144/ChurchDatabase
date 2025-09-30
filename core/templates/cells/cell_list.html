@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cells - Church Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-home me-2"></i>Cells
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button class="btn btn-primary" id="addCellBtn">
+            <i class="fas fa-plus me-1"></i>Add Cell
+        </button>
+    </div>
+</div>
+
+<!-- Cells Grid -->
+<div class="row">
+    {% for cell in cells %}
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="card cell-card h-100">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{ cell.name }}</h6>
+            </div>
+            <div class="card-body">
+                <div class="cell-info text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                        <h4 class="text-primary">{{ cell.member_count }}</h4>
+                        <small class="text-muted">Members</small>
+                    </div>
+                    
+                    <div class="cell-details">
+                        <div class="mb-2">
+                            <small class="text-muted">Created:</small><br>
+                            <strong>{{ cell.created_at|date:"M d, Y" }}</strong>
+                        </div>
+                        
+                        {% if cell.recent_members %}
+                        <div class="mt-3">
+                            <small class="text-muted d-block">Recent Members:</small>
+                            {% for member in cell.recent_members %}
+                            <span class="badge bg-light text-dark me-1 mb-1">{{ member.first_name }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100">
+                    <button class="btn btn-outline-primary btn-sm view-cell" data-cell-id="{{ cell.id }}">
+                        <i class="fas fa-eye me-1"></i>View
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm edit-cell" data-cell-id="{{ cell.id }}">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm delete-cell" 
+                            data-cell-id="{{ cell.id }}"
+                            data-cell-name="{{ cell.name }}">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-home fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">No cells found</h5>
+                <p class="text-muted">Cells are small groups for fellowship and discipleship.</p>
+                <button class="btn btn-primary" id="addCellBtnEmpty">
+                    <i class="fas fa-plus me-1"></i>Add First Cell
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .cell-card { transition: transform 0.2s; }
+    .cell-card:hover { transform: translateY(-2px); }
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+<div id="modalContainer"></div>
+{% endblock %}

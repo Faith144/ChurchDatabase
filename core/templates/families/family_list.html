@@ -1,0 +1,465 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Families - Church Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-home me-2"></i>Families
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button class="btn btn-primary" id="addFamilyBtn">
+            <i class="fas fa-plus me-1"></i>Add Family
+        </button>
+    </div>
+</div>
+
+<!-- Family Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ total_families }}</h4>
+                        <p class="mb-0">Total Families</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-home fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ total_members }}</h4>
+                        <p class="mb-0">Total Members</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ average_members|floatformat:1 }}</h4>
+                        <p class="mb-0">Avg. Members/Family</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ families_without_members }}</h4>
+                        <p class="mb-0">Empty Families</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Assembly</label>
+                <select class="form-select" id="assemblyFilter">
+                    <option value="">All Assemblies</option>
+                    {% for assembly in assemblies %}
+                    <option value="{{ assembly.id }}" {% if request.GET.assembly == assembly.id|stringformat:"i" %}selected{% endif %}>
+                        {{ assembly.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Sort By</label>
+                <select class="form-select" id="sortFilter">
+                    <option value="family_name" {% if request.GET.sort == "family_name" %}selected{% endif %}>Family Name</option>
+                    <option value="-member_count" {% if request.GET.sort == "-member_count" %}selected{% endif %}>Members (High to Low)</option>
+                    <option value="member_count" {% if request.GET.sort == "member_count" %}selected{% endif %}>Members (Low to High)</option>
+                    <option value="-created_at" {% if request.GET.sort == "-created_at" %}selected{% endif %}>Newest First</option>
+                    <option value="created_at" {% if request.GET.sort == "created_at" %}selected{% endif %}>Oldest First</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchFamilies" placeholder="Search families...">
+                    <button class="btn btn-outline-secondary" type="button" id="clearFilters">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Families Grid -->
+<div class="row" id="familiesGrid">
+    {% for family in families %}
+    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+        <div class="card family-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">{{ family.family_name }}</h6>
+                <span class="badge bg-primary">{{ family.assembly.name }}</span>
+            </div>
+            <div class="card-body">
+                <div class="family-info mb-3">
+                    {% if family.phone %}
+                    <div class="mb-2">
+                        <i class="fas fa-phone text-muted me-2"></i>
+                        <small>{{ family.phone }}</small>
+                    </div>
+                    {% endif %}
+                    {% if family.email %}
+                    <div class="mb-2">
+                        <i class="fas fa-envelope text-muted me-2"></i>
+                        <small>{{ family.email }}</small>
+                    </div>
+                    {% endif %}
+                    {% if family.address %}
+                    <div class="mb-2">
+                        <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                        <small class="text-muted">{{ family.address|truncatewords:10 }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="family-stats">
+                    <div class="d-flex justify-content-between text-center">
+                        <div>
+                            <h5 class="mb-0 text-primary">{{ family.member_count }}</h5>
+                            <small class="text-muted">Members</small>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 text-success">{{ family.active_members }}</h5>
+                            <small class="text-muted">Active</small>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 text-info">{{ family.male_count }}</h5>
+                            <small class="text-muted">Male</small>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 text-pink">{{ family.female_count }}</h5>
+                            <small class="text-muted">Female</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100">
+                    <button class="btn btn-outline-primary btn-sm view-family" data-family-id="{{ family.id }}">
+                        <i class="fas fa-eye me-1"></i>View
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm edit-family" data-family-id="{{ family.id }}">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm delete-family" 
+                            data-family-id="{{ family.id }}"
+                            data-family-name="{{ family.family_name }}">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-home fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">No families found</h5>
+                <p class="text-muted">Get started by adding your first family.</p>
+                <button class="btn btn-primary" id="addFamilyBtnEmpty">
+                    <i class="fas fa-plus me-1"></i>Add First Family
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if families.paginator.num_pages > 1 %}
+<nav aria-label="Families pagination">
+    <ul class="pagination justify-content-center">
+        {% if families.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ families.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+        </li>
+        {% endif %}
+
+        {% for num in families.paginator.page_range %}
+            {% if families.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if families.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ families.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- Modal Container -->
+<div id="modalContainer"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Filter functionality for family list
+        $('#assemblyFilter, #sortFilter').change(function() {
+            applyFilters();
+        });
+
+        $('#searchFamilies').on('input', function() {
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(applyFilters, 500);
+        });
+
+        $('#clearFilters').click(function() {
+            $('#assemblyFilter, #sortFilter').val('');
+            $('#searchFamilies').val('');
+            applyFilters();
+        });
+
+        function applyFilters() {
+            const params = new URLSearchParams();
+            
+            const assembly = $('#assemblyFilter').val();
+            const sort = $('#sortFilter').val();
+            const search = $('#searchFamilies').val();
+
+            if (assembly) params.set('assembly', assembly);
+            if (sort) params.set('sort', sort);
+            if (search) params.set('search', search);
+
+            window.location.href = '?' + params.toString();
+        }
+
+        // Add family buttons
+        $('#addFamilyBtn, #addFamilyBtnEmpty').click(function(e) {
+            e.preventDefault();
+            loadFamilyForm();
+        });
+
+        // View Family Details
+        $(document).on('click', '.view-family', function(e) {
+            e.preventDefault();
+            const familyId = $(this).data('family-id');
+            showFamilyDetails(familyId);
+        });
+
+        // Edit Family
+        $(document).on('click', '.edit-family', function(e) {
+            e.preventDefault();
+            const familyId = $(this).data('family-id');
+            loadFamilyForm(familyId);
+        });
+
+        // Delete Family
+        $(document).on('click', '.delete-family', function(e) {
+            e.preventDefault();
+            const familyId = $(this).data('family-id');
+            const familyName = $(this).data('family-name');
+            showDeleteConfirmation(familyId, familyName, 'family');
+        });
+
+        // Family card hover effects
+        $('.family-card').hover(
+            function() {
+                $(this).addClass('shadow');
+            },
+            function() {
+                $(this).removeClass('shadow');
+            }
+        );
+    });
+
+    // Family-specific functions
+    function showFamilyDetails(familyId) {
+        $.get(`/ajax/families/${familyId}/`, function(data) {
+            $('#modalContainer').html(data.html);
+            $('#familyDetailModal').modal('show');
+        }).fail(function(xhr) {
+            console.error('Failed to load family details:', xhr.responseText);
+            showToast('error', 'Failed to load family details.');
+        });
+    }
+
+    function loadFamilyForm(familyId = null) {
+        const url = familyId ? `/ajax/families/form/${familyId}/` : '/ajax/families/form/';
+        
+        $.get(url, function(data) {
+            $('#modalContainer').html(data.html);
+            $('#familyFormModal').modal('show');
+        }).fail(function(xhr) {
+            console.error('Failed to load family form:', xhr.responseText);
+            showToast('error', 'Failed to load family form. Please try again.');
+        });
+    }
+
+    function showDeleteConfirmation(familyId, familyName, type) {
+        const message = `Are you sure you want to delete the ${familyName} family?`;
+        const modalHtml = `
+            <div class="modal fade" id="deleteConfirmationModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title text-danger">Confirm Deletion</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                ${message}
+                            </p>
+                            <p class="text-muted">This will remove the family but keep the members. Members will be moved to "No Family".</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmDeleteBtn" data-object-id="${familyId}" data-object-type="${type}">Delete Family</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('#modalContainer').html(modalHtml);
+        $('#deleteConfirmationModal').modal('show');
+
+        $('#confirmDeleteBtn').on('click', function() {
+            const objectId = $(this).data('object-id');
+            const objectType = $(this).data('object-type');
+            deleteObject(objectId, objectType);
+        });
+    }
+
+    function deleteObject(objectId, objectType) {
+        const url = `/ajax/${objectType}s/delete/${objectId}/`;
+        
+        $.ajax({
+            url: url,
+            type: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    $('#deleteConfirmationModal').modal('hide');
+                    showToast('success', response.message);
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                }
+            },
+            error: function(xhr) {
+                console.error('Delete failed:', xhr.responseText);
+                showToast('error', 'Failed to delete family. Please try again.');
+                $('#deleteConfirmationModal').modal('hide');
+            }
+        });
+    }
+
+    // Toast notification function for family page
+    function showToast(type, message) {
+        // Remove any existing toasts first
+        $('.toast').remove();
+        
+        const icon = type === 'success' ? 'check-circle' : 
+                     type === 'error' ? 'exclamation-triangle' : 
+                     type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+        
+        const toast = $(`
+            <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} border-0 position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-${icon} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+        
+        $('body').append(toast);
+        const bsToast = new bootstrap.Toast(toast[0]);
+        bsToast.show();
+        
+        toast.on('hidden.bs.toast', function() {
+            $(this).remove();
+        });
+    }
+
+    // Global CSRF token setup for AJAX
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Set up CSRF token for AJAX requests
+    const csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+</script>
+
+<style>
+    .family-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+    .family-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .shadow {
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+    }
+    .text-pink { 
+        color: #e83e8c; 
+    }
+</style>
+{% endblock %}

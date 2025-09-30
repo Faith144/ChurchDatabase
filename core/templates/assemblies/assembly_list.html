@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assemblies - Church Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-church me-2"></i>Assemblies
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button class="btn btn-primary" id="addAssemblyBtn">
+            <i class="fas fa-plus me-1"></i>Add Assembly
+        </button>
+    </div>
+</div>
+
+<!-- Assembly Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ total_assemblies }}</h4>
+                        <p class="mb-0">Total Assemblies</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-church fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ active_assemblies }}</h4>
+                        <p class="mb-0">Active Assemblies</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ total_members }}</h4>
+                        <p class="mb-0">Total Members</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ total_families }}</h4>
+                        <p class="mb-0">Total Families</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-home fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assemblies Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">All Assemblies</h5>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="showInactive" {% if not request.GET.active %}checked{% endif %}>
+            <label class="form-check-label" for="showInactive">Show Inactive</label>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Assembly Name</th>
+                        <th>Location</th>
+                        <th>Contact</th>
+                        <th>Statistics</th>
+                        <th>Status</th>
+                        <th>Founded</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assembly in assemblies %}
+                    <tr>
+                        <td>
+                            <strong>{{ assembly.name }}</strong>
+                            {% if assembly.description %}
+                            <br><small class="text-muted">{{ assembly.description|truncatewords:8 }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>
+                                <i class="fas fa-map-marker-alt text-muted me-1"></i>
+                                {{ assembly.city }}, {{ assembly.state }}
+                            </div>
+                            <small class="text-muted">{{ assembly.country }}</small>
+                        </td>
+                        <td>
+                            {% if assembly.phone %}
+                            <div><i class="fas fa-phone text-muted me-1"></i> {{ assembly.phone }}</div>
+                            {% endif %}
+                            {% if assembly.email %}
+                            <div><i class="fas fa-envelope text-muted me-1"></i> {{ assembly.email }}</div>
+                            {% endif %}
+                            {% if assembly.website %}
+                            <div><i class="fas fa-globe text-muted me-1"></i> {{ assembly.website|truncatechars:20 }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="assembly-stats">
+                                <div class="d-flex text-center">
+                                    <div class="flex-fill">
+                                        <h6 class="mb-0 text-primary">{{ assembly.member_count }}</h6>
+                                        <small class="text-muted">Members</small>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <h6 class="mb-0 text-success">{{ assembly.family_count }}</h6>
+                                        <small class="text-muted">Families</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if assembly.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if assembly.founded_date %}
+                            <small class="text-muted">{{ assembly.founded_date|date:"M d, Y" }}</small>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary view-assembly" data-assembly-id="{{ assembly.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-warning edit-assembly" data-assembly-id="{{ assembly.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger delete-assembly" 
+                                        data-assembly-id="{{ assembly.id }}"
+                                        data-assembly-name="{{ assembly.name }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-church fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No assemblies found</h5>
+                            <p class="text-muted">Assemblies are the main organizational units of your church.</p>
+                            <button class="btn btn-primary" id="addAssemblyBtnEmpty">
+                                <i class="fas fa-plus me-1"></i>Add First Assembly
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+<script>
+    // Assembly-specific JavaScript
+    $(document).ready(function() {
+        // Show/hide inactive assemblies
+        $('#showInactive').change(function() {
+            const params = new URLSearchParams(window.location.search);
+            if (this.checked) {
+                params.delete('active');
+            } else {
+                params.set('active', 'true');
+            }
+            window.location.href = '?' + params.toString();
+        });
+    });
+</script>
+
+<div id="modalContainer"></div>
+{% endblock %}

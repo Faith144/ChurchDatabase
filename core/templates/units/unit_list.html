@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Units - Church Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-layer-group me-2"></i>Units
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button class="btn btn-primary" id="addUnitBtn">
+            <i class="fas fa-plus me-1"></i>Add Unit
+        </button>
+    </div>
+</div>
+
+<!-- Units Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">All Units</h5>
+        <div class="input-group" style="width: 300px;">
+            <input type="text" class="form-control" placeholder="Search units..." id="searchUnits">
+            <button class="btn btn-outline-secondary" type="button">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Unit Name</th>
+                        <th>Leader</th>
+                        <th>Description</th>
+                        <th>Members</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for unit in units %}
+                    <tr>
+                        <td>
+                            <strong>{{ unit.name }}</strong>
+                        </td>
+                        <td>
+                            {% if unit.leader %}
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                                <div>
+                                    {{ unit.leader.first_name }} {{ unit.leader.last_name }}
+                                    {% if unit.leader.phone %}<br><small class="text-muted">{{ unit.leader.phone }}</small>{% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">No leader</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if unit.description %}
+                            <small class="text-muted">{{ unit.description|truncatewords:10 }}</small>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">{{ unit.member_count }}</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ unit.created_at|date:"M d, Y" }}</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary view-unit" data-unit-id="{{ unit.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-warning edit-unit" data-unit-id="{{ unit.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger delete-unit" 
+                                        data-unit-id="{{ unit.id }}"
+                                        data-unit-name="{{ unit.name }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No units found</h5>
+                            <p class="text-muted">Units help organize members into functional groups.</p>
+                            <button class="btn btn-primary" id="addUnitBtnEmpty">
+                                <i class="fas fa-plus me-1"></i>Add First Unit
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+<script>
+    // Unit-specific JavaScript
+    $(document).ready(function() {
+        // Search functionality
+        $('#searchUnits').on('input', function() {
+            const searchTerm = $(this).val().toLowerCase();
+            $('tbody tr').each(function() {
+                const text = $(this).text().toLowerCase();
+                $(this).toggle(text.includes(searchTerm));
+            });
+        });
+    });
+</script>
+<div id="modalContainer"></div>
+{% endblock %}

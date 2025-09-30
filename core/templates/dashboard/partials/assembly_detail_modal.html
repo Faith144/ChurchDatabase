@@ -1,0 +1,426 @@
+<div class="modal fade" id="assemblyDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assembly Details: {{ assembly.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Assembly Overview -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <h6 class="border-bottom pb-2">Assembly Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="text-muted" style="width: 140px;">Assembly Name:</td>
+                                        <td><strong>{{ assembly.name }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Founded Date:</td>
+                                        <td>
+                                            {% if assembly.founded_date %}
+                                            <strong>{{ assembly.founded_date|date:"M d, Y" }}</strong>
+                                            {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Status:</td>
+                                        <td>
+                                            {% if assembly.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Location:</td>
+                                        <td>
+                                            {{ assembly.city }}, {{ assembly.state }}
+                                            <br>
+                                            <small class="text-muted">{{ assembly.country }}</small>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="text-muted" style="width: 140px;">Contact Email:</td>
+                                        <td>
+                                            {% if assembly.email %}
+                                            <a href="mailto:{{ assembly.email }}">{{ assembly.email }}</a>
+                                            {% else %}
+                                            <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Phone:</td>
+                                        <td>
+                                            {% if assembly.phone %}
+                                            <a href="tel:{{ assembly.phone }}">{{ assembly.phone }}</a>
+                                            {% else %}
+                                            <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Website:</td>
+                                        <td>
+                                            {% if assembly.website %}
+                                            <a href="{{ assembly.website }}" target="_blank">{{ assembly.website|truncatechars:30 }}</a>
+                                            {% else %}
+                                            <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Address:</td>
+                                        <td>
+                                            {% if assembly.street_address %}
+                                            <small>{{ assembly.street_address }}</small>
+                                            {% else %}
+                                            <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        {% if assembly.description %}
+                        <div class="mt-3">
+                            <small class="text-muted d-block">Description:</small>
+                            <p class="mb-0">{{ assembly.description }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h6 class="border-bottom pb-2">Statistics</h6>
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body py-3">
+                                        <h3 class="mb-0">{{ assembly_members|length }}</h3>
+                                        <small>Total Members</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body py-3">
+                                        <h3 class="mb-0">{{ assembly_families|length }}</h3>
+                                        <small>Families</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body py-3">
+                                        <h3 class="mb-0">
+                                            {% with active_count=assembly_members|length|default:0 %}
+                                                {{ active_count }}
+                                            {% endwith %}
+                                        </h3>
+                                        <small>Active Members</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body py-3">
+                                        <h3 class="mb-0">
+                                            {% with new_count=assembly_members|length|default:0 %}
+                                                {{ new_count }}
+                                            {% endwith %}
+                                        </h3>
+                                        <small>New Members</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs for different sections -->
+                <ul class="nav nav-tabs" id="assemblyTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab">
+                            <i class="fas fa-users me-1"></i> Members ({{ assembly_members|length }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="families-tab" data-bs-toggle="tab" data-bs-target="#families" type="button" role="tab">
+                            <i class="fas fa-home me-1"></i> Families ({{ assembly_families|length }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab">
+                            <i class="fas fa-info-circle me-1"></i> Additional Info
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content mt-3" id="assemblyTabsContent">
+                    <!-- Members Tab -->
+                    <div class="tab-pane fade show active" id="members" role="tabpanel">
+                        {% if assembly_members %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Family</th>
+                                        <th>Unit/Cell</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for member in assembly_members|slice:":10" %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if member.photo %}
+                                                <img src="{{ member.photo.url }}" alt="{{ member.first_name }}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                                {% else %}
+                                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                    <i class="fas fa-user text-white"></i>
+                                                </div>
+                                                {% endif %}
+                                                <div>
+                                                    <strong>{{ member.first_name }} {{ member.last_name }}</strong>
+                                                    {% if member.email %}<br><small class="text-muted">{{ member.email }}</small>{% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if member.family %}
+                                            <span class="badge bg-success">{{ member.family.family_name }}</span>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div>
+                                                {% if member.unit %}<span class="badge bg-info">{{ member.unit.name }}</span>{% endif %}
+                                                {% if member.cell %}<span class="badge bg-warning">{{ member.cell.name }}</span>{% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if member.phone %}
+                                            {{ member.phone }}
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if member.membership_status == 'ACTIVE' %}bg-success{% elif member.membership_status == 'NEW_MEMBER' %}bg-info{% else %}bg-warning{% endif %}">
+                                                {{ member.membership_status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-assembly-member" data-member-id="{{ member.id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% if assembly_members|length > 10 %}
+                            <div class="text-center mt-3">
+                                <small class="text-muted">Showing 10 of {{ assembly_members|length }} members</small>
+                                <br>
+                                <a href="{% url 'member_list' %}?assembly={{ assembly.id }}" class="btn btn-sm btn-outline-primary mt-2">
+                                    View All Members
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No members found in this assembly.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Families Tab -->
+                    <div class="tab-pane fade" id="families" role="tabpanel">
+                        {% if assembly_families %}
+                        <div class="row">
+                            {% for family in assembly_families|slice:":6" %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ family.family_name }}</h6>
+                                        <div class="small text-muted">
+                                            {% if family.phone %}<div><i class="fas fa-phone me-1"></i> {{ family.phone }}</div>{% endif %}
+                                            {% if family.email %}<div><i class="fas fa-envelope me-1"></i> {{ family.email }}</div>{% endif %}
+                                            <div class="mt-2">
+                                                <span class="badge bg-primary">{{ family.member_set.count }} members</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer py-2">
+                                        <button class="btn btn-sm btn-outline-primary view-assembly-family" data-family-id="{{ family.id }}">
+                                            <i class="fas fa-eye me-1"></i> View Family
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if assembly_families|length > 6 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Showing 6 of {{ assembly_families|length }} families</small>
+                            <br>
+                            <a href="{% url 'family_list' %}?assembly={{ assembly.id }}" class="btn btn-sm btn-outline-primary mt-2">
+                                View All Families
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-home fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No families found in this assembly.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Contact Tab -->
+                    <div class="tab-pane fade" id="contact" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Social Media</h6>
+                                <div class="list-group list-group-flush">
+                                    {% if assembly.facebook_url %}
+                                    <a href="{{ assembly.facebook_url }}" target="_blank" class="list-group-item list-group-item-action">
+                                        <i class="fab fa-facebook text-primary me-2"></i> Facebook Page
+                                    </a>
+                                    {% endif %}
+                                    {% if assembly.twitter_url %}
+                                    <a href="{{ assembly.twitter_url }}" target="_blank" class="list-group-item list-group-item-action">
+                                        <i class="fab fa-twitter text-info me-2"></i> Twitter
+                                    </a>
+                                    {% endif %}
+                                    {% if assembly.instagram_url %}
+                                    <a href="{{ assembly.instagram_url }}" target="_blank" class="list-group-item list-group-item-action">
+                                        <i class="fab fa-instagram text-danger me-2"></i> Instagram
+                                    </a>
+                                    {% endif %}
+                                    {% if assembly.youtube_url %}
+                                    <a href="{{ assembly.youtube_url }}" target="_blank" class="list-group-item list-group-item-action">
+                                        <i class="fab fa-youtube text-danger me-2"></i> YouTube
+                                    </a>
+                                    {% endif %}
+                                    {% if not assembly.facebook_url and not assembly.twitter_url and not assembly.instagram_url and not assembly.youtube_url %}
+                                    <div class="list-group-item text-muted text-center">
+                                        <i class="fas fa-share-alt fa-2x mb-2"></i>
+                                        <p>No social media links added</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Location Information</h6>
+                                {% if assembly.latitude and assembly.longitude %}
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-map-marker-alt fa-2x text-primary mb-2"></i>
+                                        <p>Coordinates available</p>
+                                        <small class="text-muted">Lat: {{ assembly.latitude }}, Long: {{ assembly.longitude }}</small>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-map-marker-alt fa-2x text-muted mb-2"></i>
+                                        <p>Location coordinates not set</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning edit-assembly" data-assembly-id="{{ assembly.id }}">
+                    <i class="fas fa-edit me-1"></i> Edit Assembly
+                </button>
+                <button type="button" class="btn btn-primary" onclick="window.location.href='{% url 'member_list' %}?assembly={{ assembly.id }}'">
+                    <i class="fas fa-users me-1"></i> Manage Members
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // View assembly member details
+        $(document).on('click', '.view-assembly-member', function(e) {
+            e.preventDefault();
+            const memberId = $(this).data('member-id');
+            $('#assemblyDetailModal').modal('hide');
+            
+            $.get(`/ajax/members/${memberId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#memberDetailModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load member details:', xhr.responseText);
+                showToast('error', 'Failed to load member details.');
+            });
+        });
+
+        // View assembly family details
+        $(document).on('click', '.view-assembly-family', function(e) {
+            e.preventDefault();
+            const familyId = $(this).data('family-id');
+            $('#assemblyDetailModal').modal('hide');
+            
+            $.get(`/ajax/families/${familyId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#familyDetailModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load family details:', xhr.responseText);
+                showToast('error', 'Failed to load family details.');
+            });
+        });
+
+        // Edit assembly
+        $(document).on('click', '.edit-assembly', function(e) {
+            e.preventDefault();
+            const assemblyId = $(this).data('assembly-id');
+            $('#assemblyDetailModal').modal('hide');
+            
+            $.get(`/ajax/assemblies/form/${assemblyId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#assemblyFormModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load assembly form:', xhr.responseText);
+                showToast('error', 'Failed to load assembly form.');
+            });
+        });
+
+        // Initialize tabs
+        const triggerTabList = [].slice.call(document.querySelectorAll('#assemblyTabs button'))
+        triggerTabList.forEach(function (triggerEl) {
+            const tabTrigger = new bootstrap.Tab(triggerEl)
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault()
+                tabTrigger.show()
+            })
+        });
+    });
+</script>

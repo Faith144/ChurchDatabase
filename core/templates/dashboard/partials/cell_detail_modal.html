@@ -1,0 +1,246 @@
+<div class="modal fade" id="cellDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cell Details: {{ cell.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Cell Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Cell Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width: 120px;">Cell Name:</td>
+                                <td><strong>{{ cell.name }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Creation Date:</td>
+                                <td>
+                                    <strong>{{ cell.created_at|date:"M d, Y" }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ cell.created_at|timesince }} ago</small>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Total Members:</td>
+                                <td>
+                                    <span class="badge bg-primary" style="font-size: 1.1em;">{{ cell_members|length }}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Member Statistics</h6>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body py-3">
+                                        <h4 class="mb-0">{{ cell_members|length }}</h4>
+                                        <small>Total</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body py-3">
+                                        <h4 class="mb-0">
+                                            {% with active_count=cell_members|length|default:0 %}
+                                                {{ active_count }}
+                                            {% endwith %}
+                                        </h4>
+                                        <small>Active</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body py-3">
+                                        <h4 class="mb-0">
+                                            {% with new_count=cell_members|length|default:0 %}
+                                                {{ new_count }}
+                                            {% endwith %}
+                                        </h4>
+                                        <small>New</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cell Members -->
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3">Cell Members ({{ cell_members|length }})</h6>
+                        
+                        {% if cell_members %}
+                        <div class="row">
+                            {% for member in cell_members %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card member-card">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            {% if member.photo %}
+                                            <img src="{{ member.photo.url }}" alt="{{ member.first_name }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1">{{ member.first_name }} {{ member.last_name }}</h6>
+                                                <div class="small text-muted">
+                                                    {% if member.phone %}<div><i class="fas fa-phone me-1"></i> {{ member.phone }}</div>{% endif %}
+                                                    {% if member.email %}<div><i class="fas fa-envelope me-1"></i> {{ member.email|truncatechars:20 }}</div>{% endif %}
+                                                    <div>
+                                                        <span class="badge {% if member.membership_status == 'ACTIVE' %}bg-success{% elif member.membership_status == 'NEW_MEMBER' %}bg-info{% else %}bg-warning{% endif %}">
+                                                            {{ member.membership_status }}
+                                                        </span>
+                                                        {% if member.family %}
+                                                        <span class="badge bg-success ms-1">{{ member.family.family_name }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer py-2">
+                                        <div class="btn-group w-100">
+                                            <button class="btn btn-sm btn-outline-primary view-cell-member" data-member-id="{{ member.id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning edit-cell-member" data-member-id="{{ member.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-info" onclick="window.location.href='tel:{{ member.phone }}'" {% if not member.phone %}disabled{% endif %}>
+                                                <i class="fas fa-phone"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No members found in this cell.</p>
+                            <button class="btn btn-primary" id="addMemberToCellBtn" data-cell-id="{{ cell.id }}">
+                                <i class="fas fa-user-plus me-1"></i> Add Member to Cell
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Cell Activity -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2">Recent Activity</h6>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                    <p>Activity tracking coming soon</p>
+                                    <small>Cell meeting schedules, attendance, and notes will be displayed here.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning edit-cell" data-cell-id="{{ cell.id }}">
+                    <i class="fas fa-edit me-1"></i> Edit Cell
+                </button>
+                <button type="button" class="btn btn-success" id="addNewMemberToCellBtn" data-cell-id="{{ cell.id }}">
+                    <i class="fas fa-user-plus me-1"></i> Add New Member
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .member-card {
+        transition: transform 0.2s;
+        border: 1px solid #e9ecef;
+    }
+    .member-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        // View cell member details
+        $(document).on('click', '.view-cell-member', function(e) {
+            e.preventDefault();
+            const memberId = $(this).data('member-id');
+            $('#cellDetailModal').modal('hide');
+            
+            $.get(`/ajax/members/${memberId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#memberDetailModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load member details:', xhr.responseText);
+                showToast('error', 'Failed to load member details.');
+            });
+        });
+
+        // Edit cell member
+        $(document).on('click', '.edit-cell-member', function(e) {
+            e.preventDefault();
+            const memberId = $(this).data('member-id');
+            $('#cellDetailModal').modal('hide');
+            
+            $.get(`/ajax/members/form/${memberId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#memberFormModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load member form:', xhr.responseText);
+                showToast('error', 'Failed to load member form.');
+            });
+        });
+
+        // Edit cell
+        $(document).on('click', '.edit-cell', function(e) {
+            e.preventDefault();
+            const cellId = $(this).data('cell-id');
+            $('#cellDetailModal').modal('hide');
+            
+            $.get(`/ajax/cells/form/${cellId}/`, function(data) {
+                $('#modalContainer').html(data.html);
+                $('#cellFormModal').modal('show');
+            }).fail(function(xhr) {
+                console.error('Failed to load cell form:', xhr.responseText);
+                showToast('error', 'Failed to load cell form.');
+            });
+        });
+
+        // Add new member to this cell
+        $(document).on('click', '#addNewMemberToCellBtn, #addMemberToCellBtn', function(e) {
+            e.preventDefault();
+            const cellId = $(this).data('cell-id');
+            $('#cellDetailModal').modal('hide');
+            
+            $.get('/ajax/members/form/', function(data) {
+                $('#modalContainer').html(data.html);
+                $('#memberFormModal').modal('show');
+                
+                // Pre-select the cell in the form
+                setTimeout(function() {
+                    $('#id_cell').val(cellId);
+                }, 500);
+            }).fail(function(xhr) {
+                console.error('Failed to load member form:', xhr.responseText);
+                showToast('error', 'Failed to load member form.');
+            });
+        });
+    });
+</script>
