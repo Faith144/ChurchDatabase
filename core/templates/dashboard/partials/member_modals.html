@@ -77,17 +77,6 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Family</label>
-                                <select class="form-select" name="family">
-                                    <option value="">Select Family</option>
-                                    {% for family in families %}
-                                    <option value="{{ family.id }}">{{ family.family_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
                                 <label class="form-label">Unit</label>
                                 <select class="form-select" name="unit">
                                     <option value="">Select Unit</option>

@@ -36,20 +36,24 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Family</label>
-                <select class="form-select" id="familyFilter">
-                    <option value="">All Families</option>
-                    {% for family in families %}
-                    <option value="{{ family.id }}" {% if request.GET.family == family.id|stringformat:"i" %}selected{% endif %}>
-                        {{ family.family_name }}
+                <label class="form-label">Gender</label>
+                <select class="form-select" id="GenderFilter">
+                    <option value="all">All Gender</option>
+                    <option value="M" {% if request.GET.gender == "M" %}selected{% endif %}>
+                        Male
                     </option>
-                    {% endfor %}
+                    <option value="F" {% if request.GET.gender == "F" %}selected{% endif %}>
+                        Female
+                    </option>
                 </select>
             </div>
             <div class="col-md-2">
                 <label class="form-label">Unit</label>
                 <select class="form-select" id="unitFilter">
                     <option value="">All Units</option>
+                    <option value="None" {% if request.GET.unit == "None" %}selected{% endif %}>
+                        None
+                    </option>
                     {% for unit in units %}
                     <option value="{{ unit.id }}" {% if request.GET.unit == unit.id|stringformat:"i" %}selected{% endif %}>
                         {{ unit.name }}
@@ -58,9 +62,25 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label">Birth Month/ date</label>
+                <select class="form-select" id="BirthMonthFilter">
+                    <option value="">All Months</option>
+                    {% for month_num, month_name in month_map %}
+                    <option value="{{ month_num }}" {% if request.GET.month == month_num|stringformat:"i" %}selected{% endif %}>
+                        {{ month_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            {% if admin_profile.is_superadmin %}   
+            <div class="col-md-2">
                 <label class="form-label">Cell</label>
                 <select class="form-select" id="cellFilter">
                     <option value="">All Cells</option>
+                    <option value="None" {% if request.GET.cell == 'None' %}selected{% endif %}>
+                        None
+                    </option>
                     {% for cell in cells %}
                     <option value="{{ cell.id }}" {% if request.GET.cell == cell.id|stringformat:"i" %}selected{% endif %}>
                         {{ cell.name }}
@@ -68,6 +88,7 @@
                     {% endfor %}
                 </select>
             </div>
+            {% endif %}
             <div class="col-md-2">
                 <label class="form-label">Status</label>
                 <select class="form-select" id="statusFilter">
@@ -82,9 +103,12 @@
         <div class="row mt-3">
             <div class="col-12">
                 <div class="input-group">
-                    <input type="text" class="form-control" id="searchMembers" placeholder="Search members by name, email, or phone...">
-                    <button class="btn btn-outline-secondary" type="button" id="clearFilters">
-                        <i class="fas fa-times me-1"></i>Clear
+                    <input type="text" class="form-control" id="searchMembers" placeholder="Search members by name, email, or phone..." value="{{ request.GET.search|default:'' }}">
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                        <i class="fas fa-times me-1"></i>Clear Search
+                    </button>
+                    <button class="btn btn-outline-danger" type="button" id="clearAllFilters">
+                        <i class="fas fa-undo me-1"></i>Clear All
                     </button>
                 </div>
             </div>
@@ -96,15 +120,19 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">
-            <span id="memberCount">{{ members.paginator.count }}</span> Members Found
+            <span id="memberCount">{{ members.paginator.count }}</span>
+            {% if admin_profile.is_cell_admin %}
+                {{admin_profile.cell.name}} Cell
+            {% endif %}
+                 Members Found
         </h5>
         <div class="d-flex align-items-center">
             <small class="text-muted me-3">Show:</small>
             <select class="form-select form-select-sm" id="pageSize" style="width: auto;">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
+                <option value="10" {% if request.GET.page_size == "10" %}selected{% endif %}>10</option>
+                <option value="25" {% if request.GET.page_size == "25" %}selected{% endif %}>25</option>
+                <option value="50" {% if request.GET.page_size == "50" %}selected{% endif %}>50</option>
+                <option value="100" {% if request.GET.page_size == "100" %}selected{% endif %}>100</option>
             </select>
         </div>
     </div>
@@ -119,14 +147,15 @@
                         <th>Name</th>
                         <th>Contact</th>
                         <th>Assembly</th>
-                        <th>Family</th>
+                        <th>Month/
+                            date</th>
                         <th>Unit/Cell</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="membersTable">
-                    {% for member in members %}
+                    {% for member in members %}    
                     <tr>
                         <td>
                             <input type="checkbox" class="member-checkbox" value="{{ member.id }}">
@@ -143,8 +172,6 @@
                                 <div>
                                     <strong>{{ member.first_name }} {{ member.last_name }}</strong>
                                     {% if member.middle_name %}<br><small class="text-muted">{{ member.middle_name }}</small>{% endif %}
-                                    {% if member.date_of_birth %}<br><small class="text-muted">Age: {{ member.age }}</small>{% endif %}
-                                </div>
                             </div>
                         </td>
                         <td>
@@ -155,14 +182,12 @@
                             <span class="badge bg-primary">{{ member.assembly.name }}</span>
                         </td>
                         <td>
-                            {% if member.family %}
-                            <span class="badge bg-success">{{ member.family.family_name }}</span>
-                            {% else %}
-                            <span class="text-muted">-</span>
-                            {% endif %}
+                            {% if member.date_of_birth %} <span class="badge bg-info"> {{ member.date_of_birth|date:"M d" }}</span>{% endif %}
                         </td>
                         <td>
                             <div>
+                                
+                                {% if member.unit is None %}<span class="badge bg-danger">None</span>{% endif %}  
                                 {% if member.unit %}<span class="badge bg-info">{{ member.unit.name }}</span>{% endif %}
                                 {% if member.cell %}<span class="badge bg-warning">{{ member.cell.name }}</span>{% endif %}
                             </div>
@@ -242,9 +267,6 @@
         <div class="d-flex justify-content-between align-items-center">
             <span id="selectedCount">0</span> members selected
             <div class="btn-group">
-                <button class="btn btn-outline-success btn-sm" id="bulkAssignFamily">
-                    <i class="fas fa-users me-1"></i>Assign to Family
-                </button>
                 <button class="btn btn-outline-info btn-sm" id="bulkAssignUnit">
                     <i class="fas fa-layer-group me-1"></i>Assign to Unit
                 </button>
@@ -266,18 +288,27 @@
 <script>
     $(document).ready(function() {
         // Filter functionality
-        $('#assemblyFilter, #familyFilter, #unitFilter, #cellFilter, #statusFilter').change(function() {
+        $('#assemblyFilter, #GenderFilter, #unitFilter, #cellFilter, #statusFilter, #BirthMonthFilter, #pageSize').change(function() {
             applyFilters();
         });
 
+        // Search with debouncing
         $('#searchMembers').on('input', function() {
             clearTimeout(window.searchTimeout);
             window.searchTimeout = setTimeout(applyFilters, 500);
         });
 
-        $('#clearFilters').click(function() {
-            $('#assemblyFilter, #familyFilter, #unitFilter, #cellFilter, #statusFilter').val('');
+        // Clear only the search field
+        $('#clearSearch').click(function() {
             $('#searchMembers').val('');
+            applyFilters();
+        });
+
+        // Clear all filters and search
+        $('#clearAllFilters').click(function() {
+            $('#assemblyFilter, #GenderFilter, #unitFilter, #cellFilter, #statusFilter, #BirthMonthFilter').val('');
+            $('#searchMembers').val('');
+            $('#pageSize').val('10');
             applyFilters();
         });
 
@@ -285,20 +316,28 @@
             const params = new URLSearchParams();
             
             const assembly = $('#assemblyFilter').val();
-            const family = $('#familyFilter').val();
+            const gender = $('#GenderFilter').val();
             const unit = $('#unitFilter').val();
             const cell = $('#cellFilter').val();
             const status = $('#statusFilter').val();
             const search = $('#searchMembers').val();
             const pageSize = $('#pageSize').val();
+            const month = $('#BirthMonthFilter').val();
 
             if (assembly) params.set('assembly', assembly);
-            if (family) params.set('family', family);
+            if (gender && gender !== 'all') params.set('gender', gender);
             if (unit) params.set('unit', unit);
             if (cell) params.set('cell', cell);
             if (status) params.set('status', status);
             if (search) params.set('search', search);
             if (pageSize) params.set('page_size', pageSize);
+            if (month) params.set('month', month);
+
+            // Preserve current page if not changing page size
+            if ($(this).attr('id') !== 'pageSize') {
+                const currentPage = new URLSearchParams(window.location.search).get('page');
+                if (currentPage) params.set('page', currentPage);
+            }
 
             window.location.href = '?' + params.toString();
         }
@@ -324,6 +363,7 @@
                 $('#bulkActions').hide();
             }
         }
+        
         // Export functionality
         $('#exportMembers').click(function() {
             const params = new URLSearchParams(window.location.search);

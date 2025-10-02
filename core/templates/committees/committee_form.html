@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit {{ form.instance.name }}{% else %}Create Committee{% endif %} - SEPCAM
+{% endblock %}
+
+{% block content %}
+<!-- Add the CSS -->
+<link rel="stylesheet" href="{% static 'css/committee-form.css' %}">
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <!-- Form Container -->
+            <div class="committee-form-container">
+                <!-- Header -->
+                <div class="form-header">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h1 class="h3 mb-2">
+                                <i class="fas {% if form.instance.pk %}fa-edit{% else %}fa-plus-circle{% endif %} me-2"></i>
+                                {% if form.instance.pk %}
+                                    Edit Committee: {{ form.instance.name }}
+                                {% else %}
+                                    Create New Committee
+                                {% endif %}
+                            </h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                                    <li class="breadcrumb-item"><a href="{% url 'committee-list' %}">Committees</a></li>
+                                    <li class="breadcrumb-item active">
+                                        {% if form.instance.pk %}Edit{% else %}Create{% endif %}
+                                    </li>
+                                </ol>
+                            </nav>
+                        </div>
+                        <a href="{% url 'committee-list' %}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Back
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Form Body -->
+                <div class="form-body">
+                    <form method="post" id="committeeForm" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% for error in form.non_field_errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Basic Information Section -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="fas fa-info-circle"></i>
+                                Basic Information
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label required">
+                                        Committee Name
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.name.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    Description
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.leader.id_for_label }}" class="form-label">
+                                    Committee Leader
+                                </label>
+                                {{ form.leader }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Optional - select a member to lead this committee. The member must be added to the committee first.
+                                </div>
+                                {% if form.leader.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.leader.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{% url 'committee-list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                {% if form.instance.pk %}Update Committee{% else %}Create Committee{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Initialize Select2 for leader field
+    $('#id_leader').select2({
+        placeholder: 'Search for a committee leader...',
+        allowClear: true,
+        width: '100%',
+        theme: 'bootstrap-5',
+        dropdownParent: $('#id_leader').parent(),
+        templateResult: formatMemberOption,
+        templateSelection: formatMemberSelection
+    });
+
+    function formatMemberOption(member) {
+        if (!member.id) return member.text;
+        
+        const email = $(member.element).data('email') || 'No email';
+        const phone = $(member.element).data('phone') || 'No phone';
+        
+        return $(
+            '<div class="member-option">' +
+                '<strong>' + member.text + '</strong>' +
+                '<br><small class="text-muted">' + email + ' | ' + phone + '</small>' +
+            '</div>'
+        );
+    }
+
+    function formatMemberSelection(member) {
+        return member.text;
+    }
+
+    // Form validation
+    $('#committeeForm').submit(function(e) {
+        let valid = true;
+        
+        // Check required fields
+        if (!$('#id_name').val().trim()) {
+            alert('Committee name is required');
+            valid = false;
+        }
+        
+        if (!valid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

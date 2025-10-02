@@ -67,8 +67,8 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="mb-0">{{ total_families }}</h4>
-                        <p class="mb-0">Total Families</p>
+                        <h4 class="mb-0">{{ total_cell }}</h4>
+                        <p class="mb-0">Total Cell</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-home fa-2x"></i>
@@ -126,19 +126,15 @@
                             <div><i class="fas fa-envelope text-muted me-1"></i> {{ assembly.email }}</div>
                             {% endif %}
                             {% if assembly.website %}
-                            <div><i class="fas fa-globe text-muted me-1"></i> {{ assembly.website|truncatechars:20 }}</div>
+                            <div><i class="fas fa-globe text-muted me-1"></i> <a href="{{assembly.website}}" target="_blank">{{ assembly.website|truncatechars:20 }}</a></div>
                             {% endif %}
                         </td>
                         <td>
                             <div class="assembly-stats">
                                 <div class="d-flex text-center">
                                     <div class="flex-fill">
-                                        <h6 class="mb-0 text-primary">{{ assembly.member_count }}</h6>
+                                        <h6 class="mb-0 text-primary">{{ assembly.member_count}}</h6>
                                         <small class="text-muted">Members</small>
-                                    </div>
-                                    <div class="flex-fill">
-                                        <h6 class="mb-0 text-success">{{ assembly.family_count }}</h6>
-                                        <small class="text-muted">Families</small>
                                     </div>
                                 </div>
                             </div>

@@ -1,7 +1,8 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .models import Assembly, Unit, Family, Member, Cell
+from .models import Assembly, Unit, Member, Cell, Committee, CommitteeMembership
+
 
 class AssemblyForm(forms.ModelForm):
     class Meta:
@@ -131,32 +132,32 @@ class UnitForm(forms.ModelForm):
         self.fields['leader'].required = False
 
 
-class FamilyForm(forms.ModelForm):
-    class Meta:
-        model = Family
-        fields = ['assembly', 'family_name', 'address', 'phone', 'email']
-        widgets = {
-            'assembly': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'family_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter family name'
-            }),
-            'address': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Enter family address'
-            }),
-            'phone': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '+1234567890'
-            }),
-            'email': forms.EmailInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'family@example.com'
-            }),
-        }
+# # class FamilyForm(forms.ModelForm):
+#     class Meta:
+#         # model = Family
+#         # fields = ['assembly', 'family_name', 'address', 'phone', 'email']
+#         widgets = {
+#             'assembly': forms.Select(attrs={
+#                 'class': 'form-control'
+#             }),
+#             # 'family_name': forms.TextInput(attrs={
+#                 'class': 'form-control',
+#                 # 'placeholder': 'Enter family name'
+#             }),
+#             'address': forms.Textarea(attrs={
+#                 'class': 'form-control',
+#                 'rows': 3,
+#                 # 'placeholder': 'Enter family address'
+#             }),
+#             'phone': forms.TextInput(attrs={
+#                 'class': 'form-control',
+#                 'placeholder': '+1234567890'
+#             }),
+#             'email': forms.EmailInput(attrs={
+#                 'class': 'form-control',
+#                 # 'placeholder': 'family@example.com'
+#             }),
+#         }
 
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')
@@ -192,7 +193,7 @@ class MemberForm(forms.ModelForm):
         model = Member
         fields = [
             'assembly', 'first_name', 'last_name', 'middle_name', 
-            'date_of_birth', 'gender', 'marital_status', 'family',
+            'date_of_birth', 'gender', 'marital_status',
             'email', 'phone', 'address', 'emergency_contact_name',
             'emergency_contact_phone', 'unit', 'membership_status',
             'membership_date', 'cell', 'baptism_date', 'confirmation_date',
@@ -224,9 +225,9 @@ class MemberForm(forms.ModelForm):
             'marital_status': forms.Select(attrs={
                 'class': 'form-control'
             }),
-            'family': forms.Select(attrs={
-                'class': 'form-control'
-            }),
+            # # 'family': forms.Select(attrs={
+            #     'class': 'form-control'
+            # }),
             'email': forms.EmailInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'member@example.com'
@@ -281,7 +282,7 @@ class MemberForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Make some fields not required for public registration
-        self.fields['family'].required = False
+        # self.fields['family'].required = False
         self.fields['unit'].required = False
         self.fields['cell'].required = False
         self.fields['membership_date'].required = False
@@ -365,7 +366,7 @@ class MemberPublicRegistrationForm(MemberForm):
     class Meta(MemberForm.Meta):
         fields = [
             'assembly', 'first_name', 'last_name', 'middle_name',
-            'date_of_birth', 'gender', 'email', 'phone', 'address'
+            'date_of_birth', 'gender', 'email', 'phone', 'address','cell'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -379,15 +380,15 @@ class MemberPublicRegistrationForm(MemberForm):
         self.fields['assembly'].label = "Which assembly do you attend?"
 
 
-class FamilyMemberForm(forms.ModelForm):
-    class Meta:
-        model = Member
-        fields = ['family']
-        widgets = {
-            'family': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-        }
+# # class FamilyMemberForm(forms.ModelForm):
+#     class Meta:
+#         model = Member
+#         # fields = ['family']
+#         widgets = {
+#             # 'family': forms.Select(attrs={
+#                 'class': 'form-control'
+#             }),
+#         }
 
 
 class MemberFilterForm(forms.Form):
@@ -410,15 +411,15 @@ class MemberFilterForm(forms.Form):
         }),
         empty_label="All Units"
     )
-    family = forms.ModelChoiceField(
-        queryset=Family.objects.all(),
-        required=False,
-        widget=forms.Select(attrs={
-            'class': 'form-control form-control-sm',
-            'id': 'familyFilter'
-        }),
-        empty_label="All Families"
-    )
+    # # family = forms.ModelChoiceField(
+    #     # queryset=Family.objects.all(),
+    #     required=False,
+    #     widget=forms.Select(attrs={
+    #         'class': 'form-control form-control-sm',
+    #         # 'id': 'familyFilter'
+    #     }),
+    #     empty_label="All Families"
+    # )
     cell = forms.ModelChoiceField(
         queryset=Cell.objects.all(),
         required=False,
@@ -571,27 +572,54 @@ class QuickMemberForm(forms.ModelForm):
 
 
 # Form for assigning multiple members to a family
-class BulkFamilyAssignmentForm(forms.Form):
-    family = forms.ModelChoiceField(
-        queryset=Family.objects.all(),
-        widget=forms.Select(attrs={
-            'class': 'form-control'
-        }),
-        label="Assign to Family"
-    )
-    members = forms.ModelMultipleChoiceField(
-        queryset=Member.objects.all(),
-        widget=forms.SelectMultiple(attrs={
-            'class': 'form-control',
-            'size': '10'
-        }),
-        label="Select Members"
-    )
+# # class BulkFamilyAssignmentForm(forms.Form):
+#     # family = forms.ModelChoiceField(
+#         # queryset=Family.objects.all(),
+#         widget=forms.Select(attrs={
+#             'class': 'form-control'
+#         }),
+#         # label="Assign to Family"
+#     )
+#     members = forms.ModelMultipleChoiceField(
+#         queryset=Member.objects.all(),
+#         widget=forms.SelectMultiple(attrs={
+#             'class': 'form-control',
+#             'size': '10'
+#         }),
+#         label="Select Members"
+#     )
 
     def __init__(self, *args, **kwargs):
         assembly = kwargs.pop('assembly', None)
         super().__init__(*args, **kwargs)
         
         if assembly:
-            self.fields['family'].queryset = Family.objects.filter(assembly=assembly)
+            # # self.fields['family'].queryset = Family.objects.filter(assembly=assembly)
             self.fields['members'].queryset = Member.objects.filter(assembly=assembly)
+
+
+class CommitteeForm(forms.ModelForm):
+    class Meta:
+        model = Committee
+        fields = ['name', 'description', 'leader']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'leader': forms.Select(attrs={'class': 'select2-single'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Customize leader choices
+        self.fields['leader'].queryset = Member.objects.all()
+        self.fields['leader'].required = False
+        self.fields['leader'].label = "Committee Leader (Optional)"
+
+class CommitteeMembershipForm(forms.ModelForm):
+    class Meta:
+        model = CommitteeMembership
+        fields = ['member', 'role']
+        widgets = {
+            'member': forms.Select(attrs={'class': 'form-select'}),
+            'role': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter role (optional)'}),
+        }

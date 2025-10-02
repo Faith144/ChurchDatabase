@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import commiteeview as com_views
 
 urlpatterns = [
     # Authentication URLs
@@ -22,12 +23,12 @@ urlpatterns = [
     path('ajax/members/delete/<int:pk>/', views.delete_member, name='delete_member'),
     
     # Family AJAX endpoints
-    path('ajax/families/<int:pk>/', views.family_detail_modal, name='family_detail_modal'),
-    path('ajax/families/form/', views.get_family_form, name='get_family_form'),
-    path('ajax/families/form/<int:pk>/', views.get_family_form, name='get_family_form_update'),
-    path('ajax/families/create/', views.create_family, name='create_family'),
-    path('ajax/families/update/<int:pk>/', views.update_family, name='update_family'),
-    path('ajax/families/delete/<int:pk>/', views.delete_family, name='delete_family'),
+    # # path('ajax/families/<int:pk>/', views.family_detail_modal, name='family_detail_modal'),
+    # # path('ajax/families/form/', views.get_family_form, name='get_family_form'),
+    # # path('ajax/families/form/<int:pk>/', views.get_family_form, name='get_family_form_update'),
+    # # path('ajax/families/create/', views.create_family, name='create_family'),
+    # # path('ajax/families/update/<int:pk>/', views.update_family, name='update_family'),
+    # # path('ajax/families/delete/<int:pk>/', views.delete_family, name='delete_family'),
     
     # Public routes
     path('register/', views.public_registration, name='public_registration'),
@@ -49,14 +50,14 @@ urlpatterns = [
 
     # List pages
     path('members/', views.member_list, name='member_list'),
-    path('families/', views.family_list, name='family_list'),
+    # # path('families/', views.family_list, name='family_list'),
     path('units/', views.unit_list, name='unit_list'),
     path('cells/', views.cell_list, name='cell_list'),
     path('assemblies/', views.assembly_list, name='assembly_list'),
 
     # Detail pages (if you want separate pages instead of modals)
     path('members/<int:pk>/', views.member_detail, name='member_detail'),
-    path('families/<int:pk>/', views.family_detail, name='family_detail'),
+    # # path('families/<int:pk>/', views.family_detail, name='family_detail'),
     path('units/<int:pk>/', views.unit_detail, name='unit_detail'),
     path('cells/<int:pk>/', views.cell_detail, name='cell_detail'),
     path('assemblies/<int:pk>/', views.assembly_detail, name='assembly_detail'),
@@ -74,7 +75,20 @@ urlpatterns = [
 
     # Assembly detail modal
     path('ajax/assemblies/<int:pk>/', views.assembly_detail_modal, name='assembly_detail_modal'),
+
+    # Committee URLs
+    path('committee/', com_views.committee_list, name='committee-list'),
+    path('committee/<int:pk>/', com_views.committee_detail, name='committee-detail'),
+    path('committee/create/', com_views.committee_create, name='committee-create'),
+    path('committee/<int:pk>/update/', com_views.committee_update, name='committee-update'),
+    path('committee/<int:pk>/delete/', com_views.committee_delete, name='committee-delete'),
     
+    # Committee Membership AJAX endpoints
+    path('committee/<int:committee_id>/members/add/', com_views.add_committee_member, name='add-committee-member'),
+    path('committee/<int:committee_id>/members/remove/<int:membership_id>/', com_views.remove_committee_member, name='remove-committee-member'),
+    path('committee/<int:committee_id>/members/role/<int:membership_id>/', com_views.update_member_role, name='update-member-role'),
+    path('committee/<int:committee_id>/leader/set/', com_views.set_committee_leader, name='set-committee-leader'),
+
     # Home page - redirect to login
     path('', views.login_view, name='home'),
 ]

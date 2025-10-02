@@ -99,9 +99,6 @@
                                                         <span class="badge {% if member.membership_status == 'ACTIVE' %}bg-success{% elif member.membership_status == 'NEW_MEMBER' %}bg-info{% else %}bg-warning{% endif %}">
                                                             {{ member.membership_status }}
                                                         </span>
-                                                        {% if member.family %}
-                                                        <span class="badge bg-success ms-1">{{ member.family.family_name }}</span>
-                                                        {% endif %}
                                                     </div>
                                                 </div>
                                             </div>

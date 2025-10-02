@@ -6,6 +6,7 @@
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Dashboard</h1>
+    <h2>{{admin_profile.cell.}}</h2>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
             <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshStats">
@@ -34,7 +35,7 @@
             <div class="card-body">
                 <div class="position-relative">
                     <input type="text" class="form-control form-control-lg" 
-                           id="globalSearch" placeholder="Search members, families, assemblies, units, cells..." 
+                           id="globalSearch" placeholder="Search member's name, phone number, email..." 
                            autocomplete="off">
                     <div class="search-results" id="searchResults"></div>
                 </div>
@@ -90,13 +91,28 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+    <!-- <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
         <div class="card bg-warning text-white stat-card">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
                         <h4 class="mb-0">{{ total_families }}</h4>
                         <p class="mb-0">Families</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-home fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+        <div class="card bg-warning text-white stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ total_units }}</h4>
+                        <p class="mb-0">Units</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-home fa-2x"></i>
@@ -152,10 +168,16 @@
                             Add Member
                         </button>
                     </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
+                    <!-- <div class="col-md-3 col-sm-6 mb-3">
                         <button class="btn btn-outline-success w-100 quick-action-btn" id="addFamilyBtn">
                             <i class="fas fa-users fa-2x mb-2"></i><br>
                             Add Family
+                        </button>
+                    </div> -->
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <button class="btn btn-outline-success w-100 quick-action-btn" id="addUnitBtn">
+                            <i class="fas fa-users fa-2x mb-2"></i><br>
+                            Add Unit
                         </button>
                     </div>
                     <div class="col-md-3 col-sm-6 mb-3">
@@ -181,7 +203,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Members ({{ members.count }})</h5>
+                <h5 class="card-title mb-0">Members ({{members_count}})</h5>
                 <div class="filter-section">
                     <select class="form-select form-select-sm me-2" id="assemblyFilter" style="width: auto; display: inline-block;">
                         <option value="">All Assemblies</option>
@@ -208,7 +230,7 @@
                                 <th>Email</th>
                                 <th>Phone</th>
                                 <th>Assembly</th>
-                                <th>Family</th>
+                                <th>Cell</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -223,7 +245,7 @@
                                 <td>{{ member.email|default:"-" }}</td>
                                 <td>{{ member.phone|default:"-" }}</td>
                                 <td>{{ member.assembly.name }}</td>
-                                <td>{{ member.family.family_name|default:"-" }}</td>
+                                <td>{{ member.cell|default:"-" }}</td>
                                 <td>
                                     <span class="badge {% if member.membership_status == 'ACTIVE' %}bg-success{% elif member.membership_status == 'NEW_MEMBER' %}bg-info{% else %}bg-warning{% endif %}">
                                         {{ member.membership_status }}
@@ -247,7 +269,14 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center">No members found</td>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No members found</h5>
+                                    <p class="text-muted">Try adjusting your filters or add a new member.</p>
+                                    <button class="btn btn-primary" id="addMemberBtnEmpty">
+                                        <i class="fas fa-user-plus me-1"></i>Add First Member
+                                    </button>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -258,7 +287,7 @@
     </div>
 </div>
 
-<!-- Recent Families -->
+<!-- Recent Families
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -293,7 +322,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 {% endblock %}
 
@@ -376,25 +405,25 @@
                 });
             }
 
-            // Families
-            if (data.families && data.families.length > 0) {
-                hasResults = true;
-                resultsContainer.append('<div class="p-2 border-bottom bg-light"><small class="text-muted fw-bold">FAMILIES</small></div>');
-                data.families.forEach(family => {
-                    resultsContainer.append(`
-                        <a href="javascript:void(0)" class="dropdown-item view-family-search p-3" data-family-id="${family.id}">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="flex-grow-1">
-                                    <strong class="d-block">${family.name}</strong>
-                                    <small class="text-muted d-block">${family.email || 'No email'}</small>
-                                    <small class="text-muted">${family.phone || 'No phone'}</small>
-                                </div>
-                                <span class="badge bg-success ms-2">Family</span>
-                            </div>
-                        </a>
-                    `);
-                });
-            }
+            // // Families
+            // if (data.families && data.families.length > 0) {
+            //     hasResults = true;
+            //     resultsContainer.append('<div class="p-2 border-bottom bg-light"><small class="text-muted fw-bold">FAMILIES</small></div>');
+            //     data.families.forEach(family => {
+            //         resultsContainer.append(`
+            //             <a href="javascript:void(0)" class="dropdown-item view-family-search p-3" data-family-id="${family.id}">
+            //                 <div class="d-flex justify-content-between align-items-center">
+            //                     <div class="flex-grow-1">
+            //                         <strong class="d-block">${family.name}</strong>
+            //                         <small class="text-muted d-block">${family.email || 'No email'}</small>
+            //                         <small class="text-muted">${family.phone || 'No phone'}</small>
+            //                     </div>
+            //                     <span class="badge bg-success ms-2">Family</span>
+            //                 </div>
+            //             </a>
+            //         `);
+            //     });
+            // }
 
             if (!hasResults) {
                 resultsContainer.append(`
@@ -524,33 +553,52 @@
         }
 
         // View Family Details
-        $(document).on('click', '.view-family, .view-family-search', function(e) {
+        // $(document).on('click', '.view-family, .view-family-search', function(e) {
+        //     e.preventDefault();
+        //     const familyId = $(this).data('family-id');
+        //     $.get(`/ajax/families/${familyId}/`, function(data) {
+        //         $('#modalContainer').html(data.html);
+        //         $('#familyDetailModal').modal('show');
+        //     }).fail(function(xhr) {
+        //         console.error('Failed to load family details:', xhr.responseText);
+        //         showToast('error', 'Failed to load family details.');
+        //     });
+        // });
+
+        // // Add Family Button
+        // $('#addFamilyBtn').click(function(e) {
+        //     e.preventDefault();
+        //     loadFamilyForm();
+        // });
+
+        // function loadFamilyForm(familyId = null) {
+        //     const url = familyId ? `/ajax/families/form/${familyId}/` : '/ajax/families/form/';
+            
+        //     $.get(url, function(data) {
+        //         $('#modalContainer').html(data.html);
+        //         $('#familyFormModal').modal('show');
+        //     }).fail(function(xhr) {
+        //         console.error('Failed to load family form:', xhr.responseText);
+        //         showToast('error', 'Failed to load family form. Please try again.');
+        //     });
+        // }
+        
+
+        // Add Unit Button
+        $('#addUnitBtn').click(function(e) {
             e.preventDefault();
-            const familyId = $(this).data('family-id');
-            $.get(`/ajax/families/${familyId}/`, function(data) {
-                $('#modalContainer').html(data.html);
-                $('#familyDetailModal').modal('show');
-            }).fail(function(xhr) {
-                console.error('Failed to load family details:', xhr.responseText);
-                showToast('error', 'Failed to load family details.');
-            });
+            loadUnitForm();
         });
 
-        // Add Family Button
-        $('#addFamilyBtn').click(function(e) {
-            e.preventDefault();
-            loadFamilyForm();
-        });
-
-        function loadFamilyForm(familyId = null) {
-            const url = familyId ? `/ajax/families/form/${familyId}/` : '/ajax/families/form/';
+        function loadUnitForm(unitId = null) {
+            const url = unitId ? `/ajax/units/form/${unitId}/` : '/ajax/units/form/';
             
             $.get(url, function(data) {
                 $('#modalContainer').html(data.html);
-                $('#familyFormModal').modal('show');
+                $('#unitFormModal').modal('show');
             }).fail(function(xhr) {
-                console.error('Failed to load family form:', xhr.responseText);
-                showToast('error', 'Failed to load family form. Please try again.');
+                console.error('Failed to load unit form:', xhr.responseText);
+                showToast('error', 'Failed to load unit form. Please try again.');
             });
         }
 

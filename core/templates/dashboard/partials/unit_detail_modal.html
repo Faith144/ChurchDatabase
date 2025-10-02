@@ -90,7 +90,6 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Name</th>
-                                        <th>Family</th>
                                         <th>Assembly</th>
                                         <th>Phone</th>
                                         <th>Status</th>
@@ -114,13 +113,6 @@
                                                     {% if member.email %}<br><small class="text-muted">{{ member.email }}</small>{% endif %}
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td>
-                                            {% if member.family %}
-                                            <span class="badge bg-success">{{ member.family.family_name }}</span>
-                                            {% else %}
-                                            <span class="text-muted">-</span>
-                                            {% endif %}
                                         </td>
                                         <td>
                                             <span class="badge bg-primary">{{ member.assembly.name }}</span>

@@ -68,23 +68,23 @@ class Cell(models.Model):
     def __str__(self):
         return self.name
 
-class Family(models.Model):
-    assembly = models.ForeignKey(Assembly, on_delete=models.CASCADE, related_name='families')
-    family_name = models.CharField(max_length=200)
-    address = models.TextField(blank=True)
-    phone = models.CharField(max_length=20, blank=True)
-    email = models.EmailField(blank=True)
-    notes = models.TextField(blank=True)
+# class Family(models.Model):
+#     assembly = models.ForeignKey(Assembly, on_delete=models.CASCADE, related_name='families')
+#     family_name = models.CharField(max_length=200)
+#     address = models.TextField(blank=True)
+#     phone = models.CharField(max_length=20, blank=True)
+#     email = models.EmailField(blank=True)
+#     notes = models.TextField(blank=True)
     
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
     
-    class Meta:
-        verbose_name_plural = "Families"
-        ordering = ['family_name']
+#     class Meta:
+#         verbose_name_plural = "Families"
+#         ordering = ['family_name']
     
-    def __str__(self):
-        return self.family_name
+#     def __str__(self):
+#         return self.family_name
 
 class Member(models.Model):
     GENDER_CHOICES = [
@@ -116,7 +116,12 @@ class Member(models.Model):
     date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
     marital_status = models.CharField(max_length=10, choices=MARITAL_STATUS_CHOICES, blank=True)
-    family = models.ForeignKey(Family, on_delete=models.SET_NULL, blank=True, null=True)
+    # family = models.ForeignKey(Family, on_delete=models.SET_NULL, blank=True, null=True)
+    month_of_birth = models.CharField(
+        max_length=20,
+        null=True, 
+        blank=True
+    )
     
     # Contact Information
     email = models.EmailField(blank=True)
@@ -139,6 +144,21 @@ class Member(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def get_month_of_birth(self):
+        """Set month_of_birth based on date_of_birth"""
+        if self.date_of_birth:
+            self.month_of_birth = self.date_of_birth.strftime('%B')
+            return self.month_of_birth
+        return None
+
+    def save(self, *args, **kwargs):
+        self.get_month_of_birth()
+        return super().save(*args, **kwargs)
+
+
+    def get_full_name(self):
+        return f"{self.first_name} {self.middle_name + ' ' if self.middle_name else ''}{self.last_name}"
     
     class Meta:
         ordering = ['last_name', 'first_name']
@@ -154,6 +174,8 @@ class Member(models.Model):
                 (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
             )
         return None
+    
+
 
 class Event(models.Model):
     EVENT_TYPES = [
@@ -315,7 +337,7 @@ class Admin(models.Model):
         user = User.objects.create_user(
             username=username,
             email=self.member.email,
-            password=password or self.member.first_name + "sepcam", 
+            password=password or self.member.first_name.lower() + "sepcam", 
             first_name=self.member.first_name,
             last_name=self.member.last_name
         )
@@ -397,3 +419,30 @@ class Admin(models.Model):
     
     def __str__(self):
         return f"{self.get_full_name()} - {self.level} - {self.assembly.name}"
+
+class Committee(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    leader = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, blank=True, related_name='chaired_committees')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Committees"
+        ordering = ['name']
+    
+    def __str__(self):
+        return f"{self.name} - {self.assembly.name}"
+
+class CommitteeMembership(models.Model):
+    committee = models.ForeignKey(Committee, on_delete=models.CASCADE, related_name='memberships')
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='committee_memberships')
+    role = models.CharField(max_length=100, blank=True, null=True)
+    joined_date = models.DateField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('committee', 'member')
+        verbose_name_plural = "Committee Memberships"
+    
+    def __str__(self):
+        return f"{self.member.get_full_name()} in {self.committee.name} as {self.role if self.role else 'Member'}"

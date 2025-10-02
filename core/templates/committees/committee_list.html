@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Committees - SEPCAM{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2">Committees</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Committees</li>
+                </ol>
+            </nav>
+        </div>
+        {% if user.is_authenticated and is_superadmin %}
+        <a href="{% url 'committee-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create Committee
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-12">
+                    <label for="search" class="form-label">Search Committees</label>
+                    <div class="input-group">
+                        <input type="text" name="search" id="search" class="form-control" 
+                               placeholder="Search by name or description..." value="{{ search_query }}">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Committees Grid -->
+    <div class="row">
+        {% for committee in page_obj %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 committee-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ committee.name }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if committee.description %}
+                    <p class="card-text text-muted">{{ committee.description|truncatewords:20 }}</p>
+                    {% endif %}
+                    
+                    <div class="committee-meta">
+                        <small class="text-muted">
+                            <i class="fas fa-users me-1"></i>
+                            {{ committee.memberships.count }} members
+                        </small>
+                        {% if committee.leader %}
+                        <br>
+                        <small class="text-muted">
+                            <i class="fas fa-crown me-1"></i>
+                            Leader: {{ committee.leader.get_full_name }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100">
+                        <a href="{% url 'committee-detail' committee.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>View
+                        </a>
+                        {% if user.is_authenticated and is_superadmin %}
+                        <a href="{% url 'committee-update' committee.pk %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h4>No committees found</h4>
+                    <p class="text-muted">
+                        {% if search_query %}
+                        Try adjusting your search terms
+                        {% else %}
+                        No committees have been created yet.
+                        {% endif %}
+                    </p>
+                    {% if user.is_authenticated and is_superadmin %}
+                    <a href="{% url 'committee-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create First Committee
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Committee pagination">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Add hover effects to committee cards
+    $('.committee-card').hover(
+        function() {
+            $(this).addClass('shadow-sm');
+        },
+        function() {
+            $(this).removeClass('shadow-sm');
+        }
+    );
+});
+</script>
+{% endblock %}

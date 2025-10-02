@@ -176,7 +176,6 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Name</th>
-                                        <th>Family</th>
                                         <th>Unit/Cell</th>
                                         <th>Contact</th>
                                         <th>Status</th>
@@ -200,13 +199,6 @@
                                                     {% if member.email %}<br><small class="text-muted">{{ member.email }}</small>{% endif %}
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td>
-                                            {% if member.family %}
-                                            <span class="badge bg-success">{{ member.family.family_name }}</span>
-                                            {% else %}
-                                            <span class="text-muted">-</span>
-                                            {% endif %}
                                         </td>
                                         <td>
                                             <div>
@@ -249,49 +241,6 @@
                         <div class="text-center py-4">
                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
                             <p class="text-muted">No members found in this assembly.</p>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Families Tab -->
-                    <div class="tab-pane fade" id="families" role="tabpanel">
-                        {% if assembly_families %}
-                        <div class="row">
-                            {% for family in assembly_families|slice:":6" %}
-                            <div class="col-md-6 mb-3">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6 class="card-title">{{ family.family_name }}</h6>
-                                        <div class="small text-muted">
-                                            {% if family.phone %}<div><i class="fas fa-phone me-1"></i> {{ family.phone }}</div>{% endif %}
-                                            {% if family.email %}<div><i class="fas fa-envelope me-1"></i> {{ family.email }}</div>{% endif %}
-                                            <div class="mt-2">
-                                                <span class="badge bg-primary">{{ family.member_set.count }} members</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card-footer py-2">
-                                        <button class="btn btn-sm btn-outline-primary view-assembly-family" data-family-id="{{ family.id }}">
-                                            <i class="fas fa-eye me-1"></i> View Family
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% if assembly_families|length > 6 %}
-                        <div class="text-center mt-3">
-                            <small class="text-muted">Showing 6 of {{ assembly_families|length }} families</small>
-                            <br>
-                            <a href="{% url 'family_list' %}?assembly={{ assembly.id }}" class="btn btn-sm btn-outline-primary mt-2">
-                                View All Families
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-home fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No families found in this assembly.</p>
                         </div>
                         {% endif %}
                     </div>
@@ -380,21 +329,6 @@
             }).fail(function(xhr) {
                 console.error('Failed to load member details:', xhr.responseText);
                 showToast('error', 'Failed to load member details.');
-            });
-        });
-
-        // View assembly family details
-        $(document).on('click', '.view-assembly-family', function(e) {
-            e.preventDefault();
-            const familyId = $(this).data('family-id');
-            $('#assemblyDetailModal').modal('hide');
-            
-            $.get(`/ajax/families/${familyId}/`, function(data) {
-                $('#modalContainer').html(data.html);
-                $('#familyDetailModal').modal('show');
-            }).fail(function(xhr) {
-                console.error('Failed to load family details:', xhr.responseText);
-                showToast('error', 'Failed to load family details.');
             });
         });
 

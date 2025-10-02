@@ -1,0 +1,116 @@
+/* Mobile Navigation Styles */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 280px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease-in-out;
+        overflow-y: auto;
+    }
+    
+    .sidebar.show {
+        left: 0;
+    }
+    
+    /* Mobile header with toggle button */
+    .mobile-nav-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .sidebar-toggle {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0.5rem;
+    }
+    
+    /* Overlay when sidebar is open */
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+    
+    .sidebar-overlay.show {
+        display: block;
+    }
+    
+    /* Adjust main content for mobile */
+    main {
+        margin-left: 0 !important;
+        padding: 1rem !important;
+    }
+    
+    /* Ensure content wrapper fits mobile */
+    .content-wrapper {
+        padding: 0;
+    }
+}
+
+/* Default hide mobile header and overlay */
+.mobile-nav-header,
+.sidebar-overlay {
+    display: none;
+}
+
+/* Show mobile header only on mobile */
+@media (max-width: 768px) {
+    .mobile-nav-header {
+        display: flex;
+    }
+    
+    /* Hide the original sidebar header on mobile */
+    .sidebar .text-center.mb-4 {
+        display: none;
+    }
+}
+
+/* Committee specific styles */
+.committee-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #e9ecef;
+}
+
+.committee-card:hover {
+    transform: translateY(-2px);
+}
+
+.member-list-item {
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.member-list-item:hover {
+    border-left-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.leader-badge {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    color: #000;
+}
+
+.quick-action-btn {
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s;
+}
+
+.quick-action-btn:hover {
+    border-color: #007bff;
+    background-color: #f8f9ff;
+}

@@ -6,8 +6,8 @@ from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from .models import Assembly, Unit, Family, Member, Cell
-from .forms import MemberForm, FamilyForm, AssemblyForm, UnitForm, CellForm
+from .models import Assembly, Unit, Member, Cell
+from .forms import MemberForm, AssemblyForm, UnitForm, CellForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
@@ -18,7 +18,7 @@ def dashboard(request):
     try:
         # Statistics
         total_members = Member.objects.count()
-        total_families = Family.objects.count()
+        # total_families = Family.objects.count()
         total_assemblies = Assembly.objects.count()
         total_units = Unit.objects.count()
         total_cells = Cell.objects.count()
@@ -30,10 +30,17 @@ def dashboard(request):
         new_members_today = Member.objects.filter(
             created_at__date=timezone.now().date()
         ).count()
+
+        # Month Mapping
+        MONTH_MAP = [
+            (1, 'January'), (2, 'February'), (3, 'March'), (4, 'April'),
+            (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
+            (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
+        ]
         
         # Recent activities
-        recent_members = Member.objects.select_related('assembly', 'family', 'unit', 'cell').order_by('-created_at')[:10]
-        recent_families = Family.objects.select_related('assembly').order_by('-created_at')[:5]
+        recent_members = Member.objects.select_related('assembly', 'unit', 'cell').order_by('-created_at')[:10]
+        # recent_families = Family.objects.select_related('assembly').order_by('-created_at')[:5]
         
         # Get all filter parameters for member list
         assembly_filter = request.GET.get('assembly', '')
@@ -41,9 +48,14 @@ def dashboard(request):
         family_filter = request.GET.get('family', '')
         cell_filter = request.GET.get('cell', '')
         status_filter = request.GET.get('status', '')
+        month_filter = request.GET.get('month', '')
         
         # Filter members based on parameters
-        members = Member.objects.all().select_related('assembly', 'family', 'unit', 'cell')
+        admin_profile = request.user.admin_account
+        if admin_profile.is_superadmin:
+            members = Member.objects.all().select_related('assembly', 'unit', 'cell').order_by('first_name','last_name')
+        if admin_profile.is_cell_admin:
+            members = Member.objects.filter(cell = admin_profile.cell).order_by('first_name','last_name')
         
         if assembly_filter:
             members = members.filter(assembly_id=assembly_filter)
@@ -55,26 +67,32 @@ def dashboard(request):
             members = members.filter(cell_id=cell_filter)
         if status_filter:
             members = members.filter(membership_status=status_filter)
+        if month_filter:
+            month_of_birth = members.get_month_of_birth()
+            members = members.filter(month_of_birth=month_filter)
         
         # Get all options for filters
         assemblies = Assembly.objects.all()
         units = Unit.objects.all()
-        families = Family.objects.all()
+        # families = Family.objects.all()
         cells = Cell.objects.all()
         
         context = {
             # Statistics
             'total_members': total_members,
-            'total_families': total_families,
+            # 'total_families': total_families,
             'total_assemblies': total_assemblies,
             'total_units': total_units,
             'total_cells': total_cells,
             'active_members': active_members,
             'new_members_today': new_members_today,
+
+            # Month mapp
+            'month_map': MONTH_MAP,
             
             # Recent data
             'recent_members': recent_members,
-            'recent_families': recent_families,
+            # 'recent_families': recent_families,
             
             # Filtered members
             'members': members,
@@ -82,7 +100,7 @@ def dashboard(request):
             # Filter options
             'assemblies': assemblies,
             'units': units,
-            'families': families,
+            # 'families': families,
             'cells': cells,
             
             # Selected filters
@@ -113,14 +131,14 @@ def ajax_search(request):
                 Q(middle_name__icontains=query) |
                 Q(email__icontains=query) |
                 Q(phone__icontains=query)
-            ).select_related('assembly', 'family', 'unit', 'cell')[:10]
+            ).select_related('assembly', 'unit', 'cell')[:10]
             
             # Search families
-            families = Family.objects.filter(
-                Q(family_name__icontains=query) |
-                Q(email__icontains=query) |
-                Q(phone__icontains=query)
-            ).select_related('assembly')[:10]
+            # families = Family.objects.filter(
+            #     Q(family_name__icontains=query) |
+            #     Q(email__icontains=query) |
+            #     Q(phone__icontains=query)
+            # ).select_related('assembly')[:10]
             
             # Search assemblies
             assemblies = Assembly.objects.filter(
@@ -151,17 +169,17 @@ def ajax_search(request):
                     }
                     for member in members
                 ],
-                'families': [
-                    {
-                        'id': family.id,
-                        'name': family.family_name,
-                        'type': 'Family',
-                        'email': family.email,
-                        'phone': family.phone,
-                        'assembly': family.assembly.name if family.assembly else '',
-                    }
-                    for family in families
-                ],
+                # 'families': [
+                #     {
+                #         'id': family.id,
+                #         'name': family.family_name,
+                #         'type': 'Family',
+                #         'email': family.email,
+                #         'phone': family.phone,
+                #         'assembly': family.assembly.name if family.assembly else '',
+                #     }
+                #     for family in families
+                # ],
                 'assemblies': [
                     {
                         'id': assembly.id,
@@ -203,13 +221,13 @@ def quick_stats(request):
         total_members = Member.objects.count()
         active_members = Member.objects.filter(membership_status='ACTIVE').count()
         new_members_today = Member.objects.filter(created_at__date=timezone.now().date()).count()
-        total_families = Family.objects.count()
+        # total_families = Family.objects.count()
         
         return JsonResponse({
             'total_members': total_members,
             'active_members': active_members,
             'new_members_today': new_members_today,
-            'total_families': total_families,
+            # 'total_families': total_families,
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -219,7 +237,7 @@ def member_detail_modal(request, pk):
     """Return member details for modal display"""
     try:
         member = get_object_or_404(Member.objects.select_related(
-            'assembly', 'family', 'unit', 'cell'
+            'assembly', 'unit', 'cell'
         ), pk=pk)
         
         html = render_to_string('dashboard/partials/member_detail_modal.html', {
@@ -334,126 +352,126 @@ def delete_member(request, pk):
             'error': str(e)
         }, status=500)
 
-# Family AJAX Views
-def family_detail_modal(request, pk):
-    """Return family details for modal display"""
-    try:
-        family = get_object_or_404(Family.objects.select_related('assembly'), pk=pk)
-        family_members = Member.objects.filter(family=family).select_related('unit', 'cell')
+# # Family AJAX Views
+# def family_detail_modal(request, pk):
+#     """Return family details for modal display"""
+#     # try:
+#     #     family = get_object_or_404(Family.objects.select_related('assembly'), pk=pk)
+#     #     family_members = Member.objects.filter(family=family).select_related('unit', 'cell')
         
-        html = render_to_string('dashboard/partials/family_detail_modal.html', {
-            'family': family,
-            'family_members': family_members,
-        })
-        return JsonResponse({'html': html})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+#     #     html = render_to_string('dashboard/partials/family_detail_modal.html', {
+#     #         'family': family,
+#     #         'family_members': family_members,
+#     #     })
+#     #     return JsonResponse({'html': html})
+#     # except Exception as e:
+#     #     return JsonResponse({'error': str(e)}, status=500)
 
-def get_family_form(request, pk=None):
-    """Return family form for modal (both create and update)"""
-    try:
-        if pk:
-            family = get_object_or_404(Family, pk=pk)
-            form = FamilyForm(instance=family)
-            title = f'Edit Family: {family.family_name}'
-        else:
-            form = FamilyForm()
-            title = 'Add New Family'
+# def get_family_form(request, pk=None):
+#     """Return family form for modal (both create and update)"""
+#     try:
+#         if pk:
+#             family = get_object_or_404(Family, pk=pk)
+#             form = FamilyForm(instance=family)
+#             title = f'Edit Family: {family.family_name}'
+#         else:
+#             form = FamilyForm()
+#             title = 'Add New Family'
         
-        html = render_to_string('dashboard/partials/family_form_modal.html', {
-            'form': form,
-            'title': title,
-            'family_id': pk
-        })
-        return JsonResponse({'html': html})
-    except Exception as e:
-        print(e)
-        return JsonResponse({'error': str(e)}, status=500)
+#         html = render_to_string('dashboard/partials/family_form_modal.html', {
+#             'form': form,
+#             'title': title,
+#             'family_id': pk
+#         })
+#         return JsonResponse({'html': html})
+#     except Exception as e:
+#         print(e)
+#         return JsonResponse({'error': str(e)}, status=500)
 
-@csrf_exempt
-def create_family(request):
-    """Create new family from dashboard"""
-    try:
-        if request.method == 'POST':
-            form = FamilyForm(request.POST)
-            if form.is_valid():
-                family = form.save()
-                return JsonResponse({
-                    'success': True,
-                    'message': f'Family {family.family_name} created successfully!'
-                })
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'errors': form.errors.as_json()
-                }, status=400)
-        else:
-            return JsonResponse({
-                'success': False,
-                'error': 'Only POST method allowed'
-            }, status=405)
+# @csrf_exempt
+# def create_family(request):
+#     """Create new family from dashboard"""
+#     try:
+#         if request.method == 'POST':
+#             form = FamilyForm(request.POST)
+#             if form.is_valid():
+#                 family = form.save()
+#                 return JsonResponse({
+#                     'success': True,
+#                     'message': f'Family {family.family_name} created successfully!'
+#                 })
+#             else:
+#                 return JsonResponse({
+#                     'success': False,
+#                     'errors': form.errors.as_json()
+#                 }, status=400)
+#         else:
+#             return JsonResponse({
+#                 'success': False,
+#                 'error': 'Only POST method allowed'
+#             }, status=405)
             
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+#     except Exception as e:
+#         return JsonResponse({
+#             'success': False,
+#             'error': str(e)
+#         }, status=500)
 
-@csrf_exempt
-def update_family(request, pk):
-    """Update family from dashboard"""
-    try:
-        family = get_object_or_404(Family, pk=pk)
+# @csrf_exempt
+# def update_family(request, pk):
+#     """Update family from dashboard"""
+#     try:
+#         family = get_object_or_404(Family, pk=pk)
         
-        if request.method == 'POST':
-            form = FamilyForm(request.POST, instance=family)
-            if form.is_valid():
-                family = form.save()
-                return JsonResponse({
-                    'success': True,
-                    'message': f'Family {family.family_name} updated successfully!'
-                })
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'errors': form.errors.as_json()
-                }, status=400)
-        else:
-            return JsonResponse({
-                'success': False,
-                'error': 'Only POST method allowed'
-            }, status=405)
+#         if request.method == 'POST':
+#             form = FamilyForm(request.POST, instance=family)
+#             if form.is_valid():
+#                 family = form.save()
+#                 return JsonResponse({
+#                     'success': True,
+#                     'message': f'Family {family.family_name} updated successfully!'
+#                 })
+#             else:
+#                 return JsonResponse({
+#                     'success': False,
+#                     'errors': form.errors.as_json()
+#                 }, status=400)
+#         else:
+#             return JsonResponse({
+#                 'success': False,
+#                 'error': 'Only POST method allowed'
+#             }, status=405)
             
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+#     except Exception as e:
+#         return JsonResponse({
+#             'success': False,
+#             'error': str(e)
+#         }, status=500)
 
-@csrf_exempt
-def delete_family(request, pk):
-    """Delete family from dashboard"""
-    try:
-        family = get_object_or_404(Family, pk=pk)
+# @csrf_exempt
+# def delete_family(request, pk):
+#     """Delete family from dashboard"""
+#     try:
+#         family = get_object_or_404(Family, pk=pk)
         
-        if request.method == 'POST':
-            family_name = family.family_name
-            family.delete()
-            return JsonResponse({
-                'success': True,
-                'message': f'Family {family_name} deleted successfully!'
-            })
-        else:
-            return JsonResponse({
-                'success': False,
-                'error': 'Only POST method allowed'
-            }, status=405)
+#         if request.method == 'POST':
+#             family_name = family.family_name
+#             family.delete()
+#             return JsonResponse({
+#                 'success': True,
+#                 'message': f'Family {family_name} deleted successfully!'
+#             })
+#         else:
+#             return JsonResponse({
+#                 'success': False,
+#                 'error': 'Only POST method allowed'
+#             }, status=405)
             
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+#     except Exception as e:
+#         return JsonResponse({
+#             'success': False,
+#             'error': str(e)
+#         }, status=500)
     
 # Cell AJAX Views
 def get_cell_form(request, pk=None):
@@ -698,8 +716,11 @@ def login_view(request):
     """Custom login view for the church management system"""
     # If user is already authenticated, redirect to dashboard
     if request.user.is_authenticated:
-        return redirect('dashboard')
-    
+        admin_profile = request.user.admin_account
+        if admin_profile.is_superadmin:
+            return redirect('dashboard')
+        if admin_profile.is_cell_admin:
+            return redirect('member_list')
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -715,7 +736,11 @@ def login_view(request):
                 next_page = request.GET.get('next')
                 if next_page:
                     return redirect(next_page)
-                return redirect('dashboard')
+                admin_profile = request.user.admin_account
+                if admin_profile.is_superadmin:
+                    return redirect('dashboard')
+                if admin_profile.is_cell_admin:
+                    return redirect('member_list')
             else:
                 messages.error(request, 'Invalid username or password.')
         else:
@@ -740,24 +765,48 @@ def logout_view(request):
 
 def member_list(request):
     """List all members with filtering and pagination"""
-    members = Member.objects.all().select_related('assembly', 'family', 'unit', 'cell')
+
+    MONTH_MAP = [
+        (1, 'January'), (2, 'February'), (3, 'March'), (4, 'April'),
+        (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
+        (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
+    ]
+
+    admin_profile = request.user.admin_account
+    if admin_profile.is_superadmin:
+        members = Member.objects.all().select_related('assembly', 'unit', 'cell').order_by('first_name','last_name')
+    if admin_profile.is_cell_admin:
+        members = Member.objects.filter(cell = admin_profile.cell).order_by('first_name','last_name')
     
     # Filtering
     assembly_id = request.GET.get('assembly')
-    family_id = request.GET.get('family')
     unit_id = request.GET.get('unit')
+    gender = request.GET.get('gender')
     cell_id = request.GET.get('cell')
     status = request.GET.get('status')
     search = request.GET.get('search')
+    month = request.GET.get('month')
     
     if assembly_id:
         members = members.filter(assembly_id=assembly_id)
-    if family_id:
-        members = members.filter(family_id=family_id)
     if unit_id:
-        members = members.filter(unit_id=unit_id)
-    if cell_id:
-        members = members.filter(cell_id=cell_id)
+        if unit_id == 'None':
+            members = members.filter(unit__isnull=True)
+        else:
+            members = members.filter(unit_id=unit_id)
+
+    if gender:
+        if gender == 'all':
+            pass
+        else:
+            members = members.filter(gender=gender)
+
+    if cell_id and admin_profile.is_superadmin:
+        if cell_id == 'None':
+            members = members.filter(cell__isnull=True)
+            print(cell_id)
+        else:
+            members = members.filter(cell_id=cell_id)
     if status:
         members = members.filter(membership_status=status)
     if search:
@@ -767,7 +816,9 @@ def member_list(request):
             Q(email__icontains=search) |
             Q(phone__icontains=search)
         )
-    
+    if month:
+        members = members.filter(date_of_birth__month=month).order_by('date_of_birth__day')
+
     # Pagination
     page_size = int(request.GET.get('page_size', 25))
     paginator = Paginator(members, page_size)
@@ -777,53 +828,53 @@ def member_list(request):
     context = {
         'members': page_obj,
         'assemblies': Assembly.objects.all(),
-        'families': Family.objects.all(),
+        'month_map': MONTH_MAP,
         'units': Unit.objects.all(),
         'cells': Cell.objects.all(),
     }
     return render(request, 'members/member_list.html', context)
 
-def family_list(request):
-    """List all families with statistics"""
-    families = Family.objects.annotate(
-        member_count=Count('member'),
-        active_members=Count('member', filter=Q(member__membership_status='ACTIVE')),
-        male_count=Count('member', filter=Q(member__gender='M')),
-        female_count=Count('member', filter=Q(member__gender='F'))
-    ).select_related('assembly')
+# def family_list(request):
+#     """List all families with statistics"""
+#     families = Family.objects.annotate(
+#         member_count=Count('member'),
+#         active_members=Count('member', filter=Q(member__membership_status='ACTIVE')),
+#         male_count=Count('member', filter=Q(member__gender='M')),
+#         female_count=Count('member', filter=Q(member__gender='F'))
+#     ).select_related('assembly')
     
-    # Filtering
-    assembly_id = request.GET.get('assembly')
-    search = request.GET.get('search')
-    sort = request.GET.get('sort', 'family_name')
+#     # Filtering
+#     assembly_id = request.GET.get('assembly')
+#     search = request.GET.get('search')
+#     sort = request.GET.get('sort', 'family_name')
     
-    if assembly_id:
-        families = families.filter(assembly_id=assembly_id)
-    if search:
-        families = families.filter(family_name__icontains=search)
+#     if assembly_id:
+#         families = families.filter(assembly_id=assembly_id)
+#     if search:
+#         families = families.filter(family_name__icontains=search)
     
-    families = families.order_by(sort)
+#     families = families.order_by(sort)
     
-    # Statistics
-    total_families = families.count()
-    total_members = sum(family.member_count for family in families)
-    average_members = total_members / total_families if total_families > 0 else 0
-    families_without_members = families.filter(member_count=0).count()
+#     # Statistics
+#     total_families = families.count()
+#     total_members = sum(family.member_count for family in families)
+#     average_members = total_members / total_families if total_families > 0 else 0
+#     families_without_members = families.filter(member_count=0).count()
     
-    # Pagination
-    paginator = Paginator(families, 12)  # 12 per page for grid view
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+#     # Pagination
+#     paginator = Paginator(families, 12)  # 12 per page for grid view
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
     
-    context = {
-        'families': page_obj,
-        'assemblies': Assembly.objects.all(),
-        'total_families': total_families,
-        'total_members': total_members,
-        'average_members': average_members,
-        'families_without_members': families_without_members,
-    }
-    return render(request, 'families/family_list.html', context)
+#     context = {
+#         'families': page_obj,
+#         'assemblies': Assembly.objects.all(),
+#         'total_families': total_families,
+#         'total_members': total_members,
+#         'average_members': average_members,
+#         'families_without_members': families_without_members,
+#     }
+#     return render(request, 'families/family_list.html', context)
 
 def unit_list(request):
     """List all units"""
@@ -839,10 +890,7 @@ def cell_list(request):
 
 def assembly_list(request):
     """List all assemblies"""
-    assemblies = Assembly.objects.annotate(
-        member_count=Count('members'),
-        family_count=Count('families')
-    )
+    assemblies = Assembly.objects.annotate(member_count=Count('members'))
     
     # Filter active assemblies
     active_only = request.GET.get('active')
@@ -852,40 +900,42 @@ def assembly_list(request):
     # Statistics
     total_assemblies = assemblies.count()
     active_assemblies = assemblies.filter(is_active=True).count()
-    total_members = sum(assembly.member_count for assembly in assemblies)
-    total_families = sum(assembly.family_count for assembly in assemblies)
+    total_members = Member.objects.all().count()
+    total_cell = Cell.objects.all().count()
+    # total_families = sum(assembly.family_count for assembly in assemblies)
     
     context = {
         'assemblies': assemblies,
         'total_assemblies': total_assemblies,
         'active_assemblies': active_assemblies,
         'total_members': total_members,
-        'total_families': total_families,
+        'total_cell': total_cell,
+        # 'total_families': total_families,
     }
     return render(request, 'assemblies/assembly_list.html', context)
 
 def member_detail(request, pk):
     """Member detail page"""
     member = get_object_or_404(Member.objects.select_related(
-        'assembly', 'family', 'unit', 'cell'
+        'assembly', 'unit', 'cell'
     ), pk=pk)
     context = {'member': member}
     return render(request, 'members/member_detail.html', context)
 
-def family_detail(request, pk):
-    """Family detail page"""
-    family = get_object_or_404(Family.objects.select_related('assembly'), pk=pk)
-    family_members = Member.objects.filter(family=family).select_related('unit', 'cell')
-    context = {
-        'family': family,
-        'family_members': family_members
-    }
-    return render(request, 'families/family_detail.html', context)
+# def family_detail(request, pk):
+#     """Family detail page"""
+#     family = get_object_or_404(Family.objects.select_related('assembly'), pk=pk)
+#     family_members = Member.objects.filter(family=family).select_related('unit', 'cell')
+#     context = {
+#         'family': family,
+#         'family_members': family_members
+#     }
+#     return render(request, 'families/family_detail.html', context)
 
 def unit_detail(request, pk):
     """Unit detail page"""
     unit = get_object_or_404(Unit.objects.select_related('leader'), pk=pk)
-    unit_members = Member.objects.filter(unit=unit).select_related('family', 'assembly', 'cell')
+    unit_members = Member.objects.filter(unit=unit).select_related('assembly', 'cell')
     context = {
         'unit': unit,
         'unit_members': unit_members
@@ -895,7 +945,7 @@ def unit_detail(request, pk):
 def cell_detail(request, pk):
     """Cell detail page"""
     cell = get_object_or_404(Cell, pk=pk)
-    cell_members = Member.objects.filter(cell=cell).select_related('family', 'assembly', 'unit')
+    cell_members = Member.objects.filter(cell=cell).select_related('assembly', 'unit')
     context = {
         'cell': cell,
         'cell_members': cell_members
@@ -905,12 +955,12 @@ def cell_detail(request, pk):
 def assembly_detail(request, pk):
     """Assembly detail page"""
     assembly = get_object_or_404(Assembly, pk=pk)
-    assembly_members = Member.objects.filter(assembly=assembly).select_related('family', 'unit', 'cell')
-    assembly_families = Family.objects.filter(assembly=assembly)
+    assembly_members = Member.objects.filter(assembly=assembly).select_related('unit', 'cell')
+    # assembly_families = Family.objects.filter(assembly=assembly)
     context = {
         'assembly': assembly,
         'assembly_members': assembly_members,
-        'assembly_families': assembly_families
+        # 'assembly_families': assembly_families
     }
     return render(request, 'assemblies/assembly_detail.html', context)
 
@@ -1019,7 +1069,7 @@ def unit_detail_modal(request, pk):
     """Return unit details for modal"""
     try:
         unit = get_object_or_404(Unit.objects.select_related('leader'), pk=pk)
-        unit_members = Member.objects.filter(unit=unit).select_related('family', 'assembly', 'cell')
+        unit_members = Member.objects.filter(unit=unit).select_related('assembly', 'cell')
         
         html = render_to_string('dashboard/partials/unit_detail_modal.html', {
             'unit': unit,
@@ -1033,7 +1083,7 @@ def cell_detail_modal(request, pk):
     """Return cell details for modal"""
     try:
         cell = get_object_or_404(Cell, pk=pk)
-        cell_members = Member.objects.filter(cell=cell).select_related('family', 'assembly', 'unit')
+        cell_members = Member.objects.filter(cell=cell).select_related('assembly', 'unit')
         
         html = render_to_string('dashboard/partials/cell_detail_modal.html', {
             'cell': cell,
@@ -1047,13 +1097,13 @@ def assembly_detail_modal(request, pk):
     """Return assembly details for modal"""
     try:
         assembly = get_object_or_404(Assembly, pk=pk)
-        assembly_members = Member.objects.filter(assembly=assembly).select_related('family', 'unit', 'cell')
-        assembly_families = Family.objects.filter(assembly=assembly)
+        assembly_members = Member.objects.filter(assembly=assembly).select_related('unit', 'cell')
+        # assembly_families = Family.objects.filter(assembly=assembly)
         
         html = render_to_string('dashboard/partials/assembly_detail_modal.html', {
             'assembly': assembly,
             'assembly_members': assembly_members,
-            'assembly_families': assembly_families,
+            # 'assembly_families': assembly_families,
         })
         return JsonResponse({'html': html})
     except Exception as e:
