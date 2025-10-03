@@ -32,9 +32,9 @@ def committee_list(request):
 
 def committee_detail(request, pk):
     committee = get_object_or_404(Committee, pk=pk)
-    memberships = committee.memberships.all().select_related('member')
+    memberships = committee.memberships.all().select_related('member').order_by('member__last_name', 'member__first_name')
     non_members = Member.objects.exclude(
-        id__in=committee.memberships.values_list('member__id', flat=True)
+        id__in=committee.memberships.values_list('member__id', flat=True)).order_by('last_name', 'first_name'
     )
     
     context = {
@@ -60,7 +60,7 @@ def committee_create(request):
                     member=leader,
                     role='Leader'
                 )
-                
+
             return redirect('committee-detail', pk=committee.pk)
     else:
         form = CommitteeForm()

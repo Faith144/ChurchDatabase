@@ -884,7 +884,7 @@ def unit_list(request):
 
 def cell_list(request):
     """List all cells"""
-    cells = Cell.objects.annotate(member_count=Count('member'))
+    cells = Cell.objects.annotate(member_count=Count('member')).order_by('name')
     context = {'cells': cells}
     return render(request, 'cells/cell_list.html', context)
 
@@ -1097,7 +1097,7 @@ def assembly_detail_modal(request, pk):
     """Return assembly details for modal"""
     try:
         assembly = get_object_or_404(Assembly, pk=pk)
-        assembly_members = Member.objects.filter(assembly=assembly).select_related('unit', 'cell')
+        assembly_members = Member.objects.filter(assembly=assembly).select_related('unit', 'cell').order_by('last_name')
         # assembly_families = Family.objects.filter(assembly=assembly)
         
         html = render_to_string('dashboard/partials/assembly_detail_modal.html', {
