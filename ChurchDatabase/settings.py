@@ -38,7 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'corsheaders',
+    'django_filters',
     'core',
+    'api'
 ]
 
 MIDDLEWARE = [
@@ -126,3 +131,35 @@ MEDIA_URL = '/media/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+    'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+}
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # React development server
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",  # Vite development server
+    "http://localhost:8000",  # Vite development server
+]
+
+CORS_ALLOW_CREDENTIALS = True

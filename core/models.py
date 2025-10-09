@@ -1,4 +1,3 @@
-# core/models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -296,8 +295,6 @@ class PrayerRequest(models.Model):
     def __str__(self):
         return f"{self.title} - {self.member}"
     
-
-# core/models.py
 class Admin(models.Model):
     ADMIN_TYPE_CHOICES = [
         ('SUPERADMIN', 'Super Admin'),

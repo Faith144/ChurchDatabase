@@ -1,159 +1,418 @@
-<!DOCTYPE html>
 {% load static %}
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Church Management System{% endblock %}</title>
-    
+    <title>{% block title %}SEPCAM Management System{% endblock %}</title>
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/nav.css' %}">
-    
+
     <!-- Custom CSS -->
     <style>
+        :root {
+            --sidebar-width: 280px;
+            --sidebar-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --content-bg: #f8f9fa;
+            --header-height: 60px;
+        }
+
+        body {
+            background-color: var(--content-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
         .sidebar {
+            width: var(--sidebar-width);
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--sidebar-bg);
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
+
+        .sidebar-header {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar-header img {
+            max-height: 70px;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-header h4 {
+            color: white;
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .sidebar-header small {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+        }
+
         .sidebar .nav-link {
-            color: #fff;
-            padding: 12px 20px;
-            margin: 4px 0;
+            color: rgba(255, 255, 255, 0.9);
+            padding: 14px 20px;
+            margin: 6px 12px;
             border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
         }
+
         .sidebar .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: translateX(5px);
         }
+
         .sidebar .nav-link.active {
             background: rgba(255, 255, 255, 0.2);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
-        .search-results {
-            position: absolute;
-            top: 100%;
+
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease-in-out;
+            background-color: var(--content-bg);
+        }
+
+        .content-wrapper {
+            padding: 2rem;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Mobile Header */
+        .mobile-header {
+            display: none;
+            background: var(--sidebar-bg);
+            color: white;
+            padding: 1rem;
+            position: fixed;
+            top: 0;
             left: 0;
             right: 0;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-height: 400px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
+        .mobile-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mobile-header img {
+            height: 40px;
+        }
+
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        /* Footer */
+        footer {
+            background: white;
+            border-top: 1px solid #dee2e6;
+            margin-top: auto;
+        }
+
+        /* Cards and UI Elements */
         .stat-card {
             border-radius: 12px;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
         }
+
         .stat-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
         }
+
         .quick-action-btn {
-            padding: 15px;
+            padding: 20px;
             text-align: center;
-            border-radius: 10px;
+            border-radius: 12px;
             transition: all 0.3s;
+            border: none;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
         }
+
         .quick-action-btn:hover {
             transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-header {
+                display: block;
+            }
+
+            .content-wrapper {
+                padding: 1rem;
+                margin-top: var(--header-height);
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .content-wrapper {
+                padding: 0.75rem;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+        }
+
+        /* Message Alerts */
+        .alert {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
         }
     </style>
-    
 </head>
+
 <body>
     {% if user.is_authenticated %}
-    <!-- Dashboard Layout -->
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-           <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <div class="text-center mb-4">
-                        <!-- Logo image above text -->
-                        <img src="{% static 'images/logo.gif' %}" alt="SEPCAM Logo" class="img-fluid mb-2" style="max-height: 90px;">
-                        <h4 class="text-white">SEPCAM Admin</h4>
-                        <small class="text-light">Welcome, {{ user.username }}</small>
-                    </div>
-                        
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}" href="{% url 'dashboard' %}">
-                                <i class="fas fa-tachometer-alt me-2"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/members/' %}active{% endif %}" href="{% url 'member_list' %}">
-                                <i class="fas fa-users me-2"></i>
-                                Members
-                            </a>
-                        </li>
-                        {% if is_superadmin %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/units/' %}active{% endif %}" href="{% url 'unit_list' %}">
-                                <i class="fas fa-layer-group me-2"></i>
-                                Units
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/cells/' %}active{% endif %}" href="{% url 'cell_list' %}">
-                                <i class="fas fa-house-user me-2"></i>
-                                Cells
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/assemblies/' %}active{% endif %}" href="{% url 'assembly_list' %}">
-                                <i class="fas fa-church me-2"></i>
-                                Assemblies
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/committee/' %}active{% endif %}" href="{% url 'committee-list' %}">
-                                <i class="fas fa-user-group me-2"></i>
-                                Committees
-                            </a>
-                        </li>
-                        {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'logout' %}">
-                                <i class="fas fa-sign-out-alt me-2"></i>
-                                Logout
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-
-            <!-- Main content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <div class="content-wrapper" style="max-width: 100%;">
-                    {% block content %}{% endblock %}
-                </div>
-                <footer>
-                    <div class="text-center py-3">
-                        <small class="text-muted">&copy; SEPCAM Management System. All rights reserved.</small>
-                    </div>
-                </footer>
-            </main>
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <div class="mobile-header-content">
+            <div class="d-flex align-items-center">
+                {% if '/static/images/logo.gif' %}
+                <img src="{% static 'images/logo.gif' %}" alt="SEPCAM Logo" class="me-2"
+                    onerror="this.style.display='none'">
+                {% endif %}
+                <span class="fw-bold">SEPCAM Admin</span>
+            </div>
+            <button class="menu-toggle" id="mobileMenuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
     </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            {% if '/static/images/logo.gif' %}
+            <img src="{% static 'images/logo.gif' %}" alt="SEPCAM Logo" class="img-fluid"
+                onerror="this.style.display='none'">
+            {% endif %}
+            <h4>SEPCAM Admin</h4>
+            <small>Welcome, {{ user.username }}</small>
+        </div>
+
+        <div class="sidebar-content pt-3">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                        href="{% url 'dashboard' %}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'member' in request.resolver_match.url_name %}active{% endif %}"
+                        href="{% url 'member_list' %}">
+                        <i class="fas fa-users"></i>
+                        Members
+                    </a>
+                </li>
+
+                {% if user.is_superuser or user.is_staff %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'unit' in request.resolver_match.url_name %}active{% endif %}"
+                        href="{% url 'unit_list' %}">
+                        <i class="fas fa-layer-group"></i>
+                        Units
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'cell' in request.resolver_match.url_name %}active{% endif %}"
+                        href="{% url 'cell_list' %}">
+                        <i class="fas fa-house-user"></i>
+                        Cells
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'assembly' in request.resolver_match.url_name %}active{% endif %}"
+                        href="{% url 'assembly_list' %}">
+                        <i class="fas fa-church"></i>
+                        Assemblies
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'committee' in request.resolver_match.url_name %}active{% endif %}"
+                        href="{% url 'committee-list' %}">
+                        <i class="fas fa-user-group"></i>
+                        Committees
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item mt-4">
+                    <a class="nav-link text-warning" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <div class="content-wrapper">
+            <!-- Messages -->
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas 
+                            {% if message.tags == 'success' %}fa-check-circle
+                            {% elif message.tags == 'error' %}fa-exclamation-circle
+                            {% elif message.tags == 'warning' %}fa-exclamation-triangle
+                            {% else %}fa-info-circle{% endif %}
+                            me-2"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Page Content -->
+            {% block content %}
+            <!-- Content will be injected here by child templates -->
+            {% endblock %}
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <div class="container-fluid">
+                <div class="text-center py-3">
+                    <small class="text-muted">&copy; {% now "Y" %} SEPCAM Management System. All rights
+                        reserved.</small>
+                </div>
+            </div>
+        </footer>
+    </main>
+
     {% else %}
-    <!-- Public Layout -->
-    {% block public_content %}{% endblock %}
+    <!-- Public Layout (for non-authenticated users) -->
+    {% block public_content %}
+    <!-- Public pages will override this block -->
+    {% endblock %}
     {% endif %}
 
-    <!-- Bootstrap JS -->
+    <!-- JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+
     <!-- Custom JavaScript -->
     <script>
-        $(document).ready(function() {
-            // Global CSRF token setup for AJAX
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            // Mobile menu toggle
+            function toggleMobileMenu() {
+                sidebar.classList.toggle('mobile-open');
+                sidebarOverlay.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+            }
+
+            mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+            sidebarOverlay.addEventListener('click', toggleMobileMenu);
+
+            // Close sidebar when clicking on a link (mobile)
+            sidebar.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 992) {
+                        toggleMobileMenu();
+                    }
+                });
+            });
+
+            // CSRF token setup for AJAX
             function getCookie(name) {
                 let cookieValue = null;
                 if (document.cookie && document.cookie !== '') {
@@ -168,22 +427,41 @@
                 }
                 return cookieValue;
             }
+
             const csrftoken = getCookie('csrftoken');
 
             // AJAX setup
             $.ajaxSetup({
-                beforeSend: function(xhr, settings) {
+                beforeSend: function (xhr, settings) {
                     if (!this.crossDomain) {
                         xhr.setRequestHeader("X-CSRFToken", csrftoken);
                     }
                 }
             });
+
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function () {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+
+            // Handle window resize
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
         });
     </script>
-    <script src="{% static 'js/nav.js' %}"></script>
 
     {% block scripts %}
-    
+    <!-- Child templates can add their own scripts here -->
     {% endblock %}
 </body>
+
 </html>

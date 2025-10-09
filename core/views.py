@@ -12,6 +12,15 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 
+def home(request):
+    if request.user.is_authenticated:
+        admin_profile = request.user.admin_account
+        if admin_profile.is_superadmin:
+            return render(request, "home.html")
+        if admin_profile.is_cell_admin:
+            return redirect('member_list')
+    return redirect('login')
+
 @login_required
 def dashboard(request):
     """Main dashboard with overview and all functionality"""
@@ -358,7 +367,7 @@ def delete_member(request, pk):
 #     # try:
 #     #     family = get_object_or_404(Family.objects.select_related('assembly'), pk=pk)
 #     #     family_members = Member.objects.filter(family=family).select_related('unit', 'cell')
-        
+
 #     #     html = render_to_string('dashboard/partials/family_detail_modal.html', {
 #     #         'family': family,
 #     #         'family_members': family_members,
@@ -377,7 +386,7 @@ def delete_member(request, pk):
 #         else:
 #             form = FamilyForm()
 #             title = 'Add New Family'
-        
+
 #         html = render_to_string('dashboard/partials/family_form_modal.html', {
 #             'form': form,
 #             'title': title,
@@ -410,7 +419,7 @@ def delete_member(request, pk):
 #                 'success': False,
 #                 'error': 'Only POST method allowed'
 #             }, status=405)
-            
+
 #     except Exception as e:
 #         return JsonResponse({
 #             'success': False,
@@ -422,7 +431,7 @@ def delete_member(request, pk):
 #     """Update family from dashboard"""
 #     try:
 #         family = get_object_or_404(Family, pk=pk)
-        
+
 #         if request.method == 'POST':
 #             form = FamilyForm(request.POST, instance=family)
 #             if form.is_valid():
@@ -441,7 +450,7 @@ def delete_member(request, pk):
 #                 'success': False,
 #                 'error': 'Only POST method allowed'
 #             }, status=405)
-            
+
 #     except Exception as e:
 #         return JsonResponse({
 #             'success': False,
@@ -453,7 +462,7 @@ def delete_member(request, pk):
 #     """Delete family from dashboard"""
 #     try:
 #         family = get_object_or_404(Family, pk=pk)
-        
+
 #         if request.method == 'POST':
 #             family_name = family.family_name
 #             family.delete()
@@ -466,13 +475,13 @@ def delete_member(request, pk):
 #                 'success': False,
 #                 'error': 'Only POST method allowed'
 #             }, status=405)
-            
+
 #     except Exception as e:
 #         return JsonResponse({
 #             'success': False,
 #             'error': str(e)
 #         }, status=500)
-    
+
 # Cell AJAX Views
 def get_cell_form(request, pk=None):
     """Return cell form for modal (both create and update)"""
@@ -761,8 +770,6 @@ def logout_view(request):
     return redirect('login')
 
 
-
-
 def member_list(request):
     """List all members with filtering and pagination"""
 
@@ -842,30 +849,30 @@ def member_list(request):
 #         male_count=Count('member', filter=Q(member__gender='M')),
 #         female_count=Count('member', filter=Q(member__gender='F'))
 #     ).select_related('assembly')
-    
+
 #     # Filtering
 #     assembly_id = request.GET.get('assembly')
 #     search = request.GET.get('search')
 #     sort = request.GET.get('sort', 'family_name')
-    
+
 #     if assembly_id:
 #         families = families.filter(assembly_id=assembly_id)
 #     if search:
 #         families = families.filter(family_name__icontains=search)
-    
+
 #     families = families.order_by(sort)
-    
+
 #     # Statistics
 #     total_families = families.count()
 #     total_members = sum(family.member_count for family in families)
 #     average_members = total_members / total_families if total_families > 0 else 0
 #     families_without_members = families.filter(member_count=0).count()
-    
+
 #     # Pagination
 #     paginator = Paginator(families, 12)  # 12 per page for grid view
 #     page_number = request.GET.get('page')
 #     page_obj = paginator.get_page(page_number)
-    
+
 #     context = {
 #         'families': page_obj,
 #         'assemblies': Assembly.objects.all(),

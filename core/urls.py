@@ -90,5 +90,5 @@ urlpatterns = [
     path('committee/<int:committee_id>/leader/set/', com_views.set_committee_leader, name='set-committee-leader'),
 
     # Home page - redirect to login
-    path('', views.login_view, name='home'),
+    path('', views.home, name='home'),
 ]
