@@ -7,6 +7,7 @@ from .models import Assembly, Unit, Member, Cell, Admin
 class UnitMemberInline(admin.TabularInline):
     """Inline members for Unit admin"""
     model = Member
+    fk_name = 'unit'
     fields = ['first_name', 'last_name', 'email', 'phone']
     readonly_fields = ['first_name', 'last_name', 'email', 'phone']
     extra = 0

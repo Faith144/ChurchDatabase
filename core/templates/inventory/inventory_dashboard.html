@@ -1,0 +1,374 @@
+{% extends 'inventory_base.html' %}
+{% load static %}
+{% load inventory_extras %}
+{% load inventory_filters %}
+
+{% block title %}Inventory Dashboard - SEPCAM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-chart-bar text-primary me-2"></i>
+        Inventory Dashboard
+    </h1>
+    <div>
+        <a href="{% url 'inventory_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-list me-1"></i> View All Items
+        </a>
+        <a href="{% url 'inventory_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> Add New Item
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card border-primary">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title text-muted mb-1">Total Items</h6>
+                        <h2 class="text-primary mb-0">{{ total_items }}</h2>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-boxes fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-success">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title text-muted mb-1">Total Value</h6>
+                        <h2 class="text-success mb-0">₦{{ total_value|floatformat:2 }}</h2>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-money-bill-wave fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-warning">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title text-muted mb-1">Low Stock Items</h6>
+                        <h2 class="text-warning mb-0">{{ low_stock_items|length }}</h2>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-info">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title text-muted mb-1">Assemblies</h6>
+                        <h2 class="text-info mb-0">{{ assembly_stats|length }}</h2>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-church fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Status Distribution -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Status Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for status_name, data in status_counts.items %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-medium">{{ status_name }}</span>
+                        <span class="text-muted">{{ data.count }} items ({{ data.percentage|floatformat:1 }}%)</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar 
+                            {% if status_name == 'Available' %}bg-success
+                            {% elif status_name == 'In Use' %}bg-info
+                            {% elif status_name == 'Reserved' %}bg-warning
+                            {% elif status_name == 'Under Maintenance' %}bg-danger
+                            {% else %}bg-secondary{% endif %}" style="width: {{ data.percentage }}%">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Condition Distribution -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clipboard-check me-2"></i>Condition Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for condition_name, data in condition_counts.items %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-medium">{{ condition_name }}</span>
+                        <span class="text-muted">{{ data.count }} items ({{ data.percentage|floatformat:1 }}%)</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar 
+                            {% if condition_name == 'Excellent' %}bg-success
+                            {% elif condition_name == 'Good' %}bg-info
+                            {% elif condition_name == 'Fair' %}bg-warning
+                            {% elif condition_name == 'Poor' %}bg-danger
+                            {% else %}bg-dark{% endif %}" style="width: {{ data.percentage }}%">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Low Stock Alert -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Low Stock Alert
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if low_stock_items %}
+                <div class="list-group list-group-flush">
+                    {% for item in low_stock_items %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ item.name }}</h6>
+                            <small class="text-muted">{{ item.assembly.name }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-danger rounded-pill">{{ item.quantity }} left</span>
+                            <br>
+                            <small class="text-muted">Min: 5</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <p>All items have sufficient stock!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Additions -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>Recent Additions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_items %}
+                <div class="list-group list-group-flush">
+                    {% for item in recent_items %}
+                    <a href="{% url 'inventory_detail' item.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ item.name }}</h6>
+                            <small class="text-muted">{{ item.created_at|timesince }} ago</small>
+                        </div>
+                        <p class="mb-1 text-muted small">{{ item.assembly.name }}</p>
+                        <small>
+                            <span class="status-badge status-{{ item.status }} sm">
+                                {{ item.get_status_display }}
+                            </span>
+                        </small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-box-open fa-2x mb-2"></i>
+                    <p>No recent items</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Items Needing Attention -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools me-2"></i>Items Needing Attention
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if attention_items %}
+                <div class="list-group list-group-flush">
+                    {% for item in attention_items %}
+                    <a href="{% url 'inventory_detail' item.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ item.name }}</h6>
+                            <span class="status-badge condition-{{ item.condition }}">
+                                {{ item.get_condition_display }}
+                            </span>
+                        </div>
+                        <p class="mb-1 text-muted small">{{ item.assembly.name }}</p>
+                        <small class="text-muted">
+                            Status:
+                            <span class="status-badge status-{{ item.status }} sm">
+                                {{ item.get_status_display }}
+                            </span>
+                        </small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-thumbs-up fa-2x text-success mb-2"></i>
+                    <p>All items are in good condition!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Most Valuable Items -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-crown me-2"></i>Most Valuable Items
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if valuable_items %}
+                <div class="list-group list-group-flush">
+                    {% for item in valuable_items %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ item.name }}</h6>
+                            <strong class="text-success">₦{{ item.total_price|floatformat:2 }}</strong>
+                        </div>
+                        <p class="mb-1 text-muted small">{{ item.assembly.name }}</p>
+                        <small class="text-muted">
+                            Quantity: {{ item.quantity }} •
+                            <span class="status-badge status-{{ item.status }} sm">
+                                {{ item.get_status_display }}
+                            </span>
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-search-dollar fa-2x mb-2"></i>
+                    <p>No value data available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assembly Distribution -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-church me-2"></i>Inventory by Assembly
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Assembly</th>
+                                <th>Item Count</th>
+                                <th>Total Value</th>
+                                <th>Average Value</th>
+                                <th>Status Distribution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assembly in assembly_stats %}
+                            <tr>
+                                <td>
+                                    <strong>{{ assembly.name }}</strong>
+                                </td>
+                                <td>{{ assembly.item_count }}</td>
+                                <td class="fw-bold text-success">
+                                    ₦{{ assembly.total_value|default:0|floatformat:2 }}
+                                </td>
+                                <td class="text-muted">
+                                    ₦{{ assembly.total_value|default:0|div:assembly.item_count|floatformat:2 }}
+                                </td>
+                                <td>
+                                    {% with assembly.inventories.all as items %}
+                                    <small>
+                                        <span class="badge bg-success me-1">
+                                            {{ items|status_count:'available' }} Available
+                                        </span>
+                                        <span class="badge bg-info me-1">
+                                            {{ items|status_count:'in_use' }} In Use
+                                        </span>
+                                        <span class="badge bg-warning me-1">
+                                            {{ items|status_count:'maintenance' }} Maintenance
+                                        </span>
+                                    </small>
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    No assembly data available
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh dashboard every 5 minutes
+    setTimeout(function () {
+        window.location.reload();
+    }, 300000); // 5 minutes
+</script>
+{% endblock %}

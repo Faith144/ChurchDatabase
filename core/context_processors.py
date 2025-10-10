@@ -17,6 +17,7 @@ def admin_context(request):
                 'is_superadmin': admin_profile.is_superadmin,
                 'is_cell_admin': admin_profile.is_cell_admin,
                 'is_moderator': admin_profile.is_moderator,
+                'is_inventory_admin':admin_profile.is_inventory_admin,
                 'has_cell_assignment': admin_profile.cell is not None,  # Add this
                 'admin_cell_name': admin_profile.cell.name if admin_profile.cell else 'No Cell Assigned',
                 'members_count': members_count if admin_profile.is_cell_admin else Member.objects.count(),

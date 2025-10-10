@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .models import Assembly, Unit, Member, Cell, Committee, CommitteeMembership
+from .models import Assembly, Unit, Member, Cell, Committee, CommitteeMembership, Inventory, Admin
 
 
 class AssemblyForm(forms.ModelForm):
@@ -622,4 +622,60 @@ class CommitteeMembershipForm(forms.ModelForm):
         widgets = {
             'member': forms.Select(attrs={'class': 'form-select'}),
             'role': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter role (optional)'}),
+        }
+
+
+class InventoryForm(forms.ModelForm):
+    class Meta:
+        model = Inventory
+        fields = [
+            "name",
+            "description",
+            "unit",
+            "assembly",
+            "acquired_from",
+            "Brand",
+            "Model",
+            "quantity",
+            "price_per_unit",
+            "status",
+            "condition",
+            "location",
+            "notes",
+            "comment",
+            "image",
+            "acquired_date",
+        ]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+            "comment": forms.Textarea(attrs={"rows": 3}),
+            "acquired_date": forms.DateInput(attrs={"type": "date"}),
+        }
+        labels = {
+            "Brand": "Brand",
+            "Model": "Model",
+        }
+
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get("quantity")
+        if quantity and quantity < 1:
+            raise forms.ValidationError("Quantity must be at least 1.")
+        return quantity
+
+    def clean_price_per_unit(self):
+        price = self.cleaned_data.get("price_per_unit")
+        if price and price < 0:
+            raise forms.ValidationError("Price cannot be negative.")
+        return price
+    
+class AdminForm(forms.ModelForm):
+    class Meta:
+        model = Admin
+        fields = ['member','assembly','level','cell']
+        widgets = {
+            "member":forms.Select(attrs={'class':'form-select'}),
+            "assembly":forms.Select(attrs={'class':'form-select'}),
+            "level":forms.Select(attrs={'class':'form-control'}),
+            "cell":forms.Select(attrs={'class':'form-control'})
         }

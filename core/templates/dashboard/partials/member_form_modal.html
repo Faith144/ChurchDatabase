@@ -5,8 +5,8 @@
                 <h5 class="modal-title">{{ title }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="memberForm" method="POST" enctype="multipart/form-data" 
-                  action="{% if member_id %}/ajax/members/update/{{ member_id }}/{% else %}/ajax/members/create/{% endif %}">
+            <form id="memberForm" method="POST" enctype="multipart/form-data"
+                action="{% if member_id %}/ajax/members/update/{{ member_id }}/{% else %}/ajax/members/create/{% endif %}">
                 <div class="modal-body">
                     {% csrf_token %}
                     <div class="row">
@@ -29,7 +29,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -44,7 +44,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -59,12 +59,12 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Assembly *</label>
                         {{ form.assembly }}
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -99,18 +99,18 @@
 
 <script>
     // Handle member form submission
-    $('#memberForm').on('submit', function(e) {
+    $('#memberForm').on('submit', function (e) {
         e.preventDefault();
         const formData = new FormData(this);
         const url = $(this).attr('action');
-        
+
         $.ajax({
             url: url,
             type: 'POST',
             data: formData,
             processData: false,
             contentType: false,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     $('#memberFormModal').modal('hide');
                     showToast('success', response.message);
@@ -119,7 +119,7 @@
                     }, 1000);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 try {
                     const response = JSON.parse(xhr.responseText);
                     if (response.errors) {

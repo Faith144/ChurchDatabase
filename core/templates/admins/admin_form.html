@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - SEPCAM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <!-- Page Header -->
+            <div class="row mb-4">
+                <div class="col">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-2">{{ title }}</h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+                                    <li class="breadcrumb-item"><a href="{% url 'admin_list' %}">Admins</a></li>
+                                    <li class="breadcrumb-item active">{{ title }}</li>
+                                </ol>
+                            </nav>
+                        </div>
+                        <a href="{% url 'admin_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Card -->
+            <div class="card border-0">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">Admin Information</h5>
+                    <p class="text-muted mb-0">Fill in the details below to {{ title|lower }}.</p>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="adminForm">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <!-- Member Field -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.member.id_for_label }}" class="form-label">
+                                    Member <span class="text-danger">*</span>
+                                </label>
+                                {{ form.member }}
+                                {% if form.member.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.member.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Select a member to grant admin privileges.</div>
+                            </div>
+
+                            <!-- Assembly Field -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.assembly.id_for_label }}" class="form-label">
+                                    Assembly <span class="text-danger">*</span>
+                                </label>
+                                {{ form.assembly }}
+                                {% if form.assembly.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.assembly.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Level Field -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.level.id_for_label }}" class="form-label">
+                                    Admin Level <span class="text-danger">*</span>
+                                </label>
+                                {{ form.level }}
+                                {% if form.level.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.level.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Cell Field -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.cell.id_for_label }}" class="form-label">
+                                    Cell
+                                </label>
+                                {{ form.cell }}
+                                {% if form.cell.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.cell.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Required for Cell-level admins only.</div>
+                            </div>
+                        </div>
+
+                        <!-- Auto-generated credentials notice -->
+                        <div class="alert alert-info">
+                            <div class="d-flex">
+                                <i class="fas fa-info-circle me-3 mt-1"></i>
+                                <div>
+                                    <h6 class="alert-heading mb-2">Auto-generated Credentials</h6>
+                                    <p class="mb-0">
+                                        Username and password will be automatically generated based on the member's
+                                        information.
+                                        The credentials will be created when you save this form.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'admin_list' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        {% if admin %}Update Admin{% else %}Create Admin{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Existing Admin Info (for update forms) -->
+            {% if admin %}
+            <div class="card border-0 mt-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">Current Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Username:</th>
+                                    <td><code>{{ admin.user_account.username }}</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>{{ admin.user_account.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Created:</th>
+                                    <td>{{ admin.user_account.date_joined|date:"M d, Y H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Last Login:</th>
+                                    <td>{{ admin.user_account.last_login|date:"M d, Y H:i"|default:"Never" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Active:</th>
+                                    <td>
+                                        {% if admin.user_account.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        // Show/hide cell field based on level selection
+        function toggleCellField() {
+            const level = $('#id_level').val();
+            const cellField = $('#id_cell').closest('.mb-3');
+
+            if (level === 'Cell') {
+                cellField.show();
+                $('#id_cell').prop('required', true);
+            } else {
+                cellField.hide();
+                $('#id_cell').prop('required', false);
+                $('#id_cell').val('');
+            }
+        }
+
+        // Initial toggle
+        toggleCellField();
+
+        // Toggle on change
+        $('#id_level').change(toggleCellField);
+
+        // Filter cells based on selected assembly
+        function filterCells() {
+            const assemblyId = $('#id_assembly').val();
+            const cellSelect = $('#id_cell');
+
+            if (assemblyId) {
+                // Show loading state
+                cellSelect.prop('disabled', true);
+
+                // AJAX call to get cells for assembly
+                $.ajax({
+                    url: '{% url "ajax_get_cells" %}',
+                    data: {
+                        'assembly_id': assemblyId
+                    },
+                    success: function (data) {
+                        cellSelect.empty();
+                        cellSelect.append('<option value="">Select a cell</option>');
+
+                        $.each(data, function (index, cell) {
+                            cellSelect.append(
+                                $('<option></option>').attr('value', cell.id).text(cell.name)
+                            );
+                        });
+
+                        cellSelect.prop('disabled', false);
+                    },
+                    error: function () {
+                        cellSelect.prop('disabled', false);
+                    }
+                });
+            } else {
+                cellSelect.empty();
+                cellSelect.append('<option value="">Select a cell</option>');
+            }
+        }
+
+        // Filter cells when assembly changes
+        $('#id_assembly').change(filterCells);
+
+        // Check if member already has admin account
+        $('#id_member').change(function () {
+            const memberId = $(this).val();
+
+            if (memberId) {
+                $.ajax({
+                    url: '{% url "ajax_check_member_admin" %}',
+                    data: {
+                        'member_id': memberId
+                    },
+                    success: function (data) {
+                        if (data.has_admin) {
+                            // Show warning if member already has admin account
+                            const warning = `
+                                <div class="alert alert-warning mt-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    This member already has an admin account.
+                                </div>
+                            `;
+
+                            // Remove existing warning
+                            $('#member-warning').remove();
+
+                            // Add new warning
+                            $('#id_member').after(`<div id="member-warning">${warning}</div>`);
+                        } else {
+                            $('#member-warning').remove();
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

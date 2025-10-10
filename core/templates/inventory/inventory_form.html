@@ -1,0 +1,574 @@
+{% extends 'inventory_base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - SEPCAM Inventory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #667eea;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-section h5 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .form-section h5 i {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-right: 10px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .form-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .calculation-box {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 2px solid #28a745;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .image-preview {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+
+    .image-preview:hover {
+        border-color: #667eea;
+        background: #f0f2ff;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-outline-secondary {
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-secondary:hover {
+        transform: translateY(-2px);
+    }
+
+    .field-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .field-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        padding: 1.5rem;
+    }
+
+    .card-header h4 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas {% if item %}fa-edit{% else %}fa-plus-circle{% endif %} me-2"></i>
+                    {{ title }}
+                </h4>
+                <small class="opacity-75">
+                    {% if item %}
+                    Last updated: {{ item.updated_at|date:"M d, Y H:i" }}
+                    {% else %}
+                    Add a new item to your church inventory
+                    {% endif %}
+                </small>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate class="needs-validation">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Please correct the following errors:</strong>
+                        <ul class="mb-0 mt-2">
+                            {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+
+                    <!-- Basic Information Section -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-info-circle"></i>Basic Information</h5>
+                        <div class="row g-4">
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.name.id_for_label }}" class="form-label required-field">
+                                    Item Name
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.name.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Enter a descriptive name for the inventory item</div>
+                            </div>
+
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.assembly.id_for_label }}" class="form-label required-field">
+                                    Assembly
+                                </label>
+                                {{ form.assembly }}
+                                {% if form.assembly.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.assembly.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Select which assembly this item belongs to</div>
+                            </div>
+
+                            <div class="col-12 field-group">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    Description
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.description.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Provide a detailed description of the item</div>
+                            </div>
+
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.unit.id_for_label }}" class="form-label">
+                                    Unit/Department
+                                </label>
+                                {{ form.unit }}
+                                {% if form.unit.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.unit.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">e.g., Media, Technical, Choir...</div>
+                            </div>
+
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.location.id_for_label }}" class="form-label">
+                                    Storage Location
+                                </label>
+                                {{ form.location }}
+                                {% if form.location.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.location.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">e.g., Main Sanctuary, Kitchen Cabinet, Youth Room, Storage Room A
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item Specifications Section -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-tags"></i>Item Specifications</h5>
+                        <div class="row g-4">
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.Brand.id_for_label }}" class="form-label">
+                                    Brand
+                                </label>
+                                {{ form.Brand }}
+                                {% if form.Brand.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.Brand.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Manufacturer or brand name</div>
+                            </div>
+
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.Model.id_for_label }}" class="form-label">
+                                    Model
+                                </label>
+                                {{ form.Model }}
+                                {% if form.Model.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.Model.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Model number or specific identifier</div>
+                            </div>
+
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label required-field">
+                                    Quantity in Stock
+                                </label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.quantity.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Current number of items available</div>
+                            </div>
+
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.price_per_unit.id_for_label }}" class="form-label">
+                                    Price per Unit (₦)
+                                </label>
+                                {{ form.price_per_unit }}
+                                {% if form.price_per_unit.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.price_per_unit.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Cost per individual item or unit</div>
+                            </div>
+
+                            <!-- Auto-calculated Total Price -->
+                            <div class="col-12">
+                                <div class="calculation-box">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h6 class="mb-1 text-success">
+                                                <i class="fas fa-calculator me-2"></i>
+                                                Calculated Total Value
+                                            </h6>
+                                            <small class="text-muted">Quantity × Price per Unit</small>
+                                        </div>
+                                        <div class="col-md-4 text-end">
+                                            <h4 class="text-success mb-0" id="total-price-display">₦0.00</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status & Condition Section -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-clipboard-check"></i>Status & Condition</h5>
+                        <div class="row g-4">
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">
+                                    Current Status
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.status.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Select the current availability status</div>
+                            </div>
+
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.condition.id_for_label }}" class="form-label">
+                                    Physical Condition
+                                </label>
+                                {{ form.condition }}
+                                {% if form.condition.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.condition.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Assess the physical state of the item</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acquisition & Media Section -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-camera"></i>Acquisition & Media</h5>
+                        <div class="row g-4">
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.acquired_from.id_for_label }}" class="form-label">
+                                    Acquired From
+                                </label>
+                                {{ form.acquired_from }}
+                                {% if form.acquired_from.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.acquired_from.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Source of acquisition (vendor, donation, etc.)</div>
+                            </div>
+
+                            <div class="col-md-6 field-group">
+                                <label for="{{ form.acquired_date.id_for_label }}" class="form-label">
+                                    Acquisition Date
+                                </label>
+                                {{ form.acquired_date }}
+                                {% if form.acquired_date.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.acquired_date.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Date when the item was acquired</div>
+                            </div>
+
+                            <div class="col-12 field-group">
+                                <label for="{{ form.image.id_for_label }}" class="form-label">
+                                    Item Image
+                                </label>
+                                <div class="image-preview">
+                                    {{ form.image }}
+                                    {% if form.image.errors %}
+                                    <div class="text-danger small mt-2">
+                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                        {{ form.image.errors }}
+                                    </div>
+                                    {% endif %}
+
+                                    {% if item and item.image %}
+                                    <div class="mt-3">
+                                        <p class="mb-2 text-muted">Current Image:</p>
+                                        <img src="{{ item.image.url }}" alt="Current item image"
+                                            class="img-thumbnail rounded" style="max-height: 150px;">
+                                    </div>
+                                    {% else %}
+                                    <div class="mt-2">
+                                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted mb-0">Click to upload or drag and drop</p>
+                                        <small class="text-muted">PNG, JPG, GIF up to 5MB</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-sticky-note"></i>Additional Notes & Instructions</h5>
+                        <div class="field-group">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                Special Instructions & Notes
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {{ form.notes.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Include any special handling instructions, maintenance requirements, usage guidelines,
+                                or other important information about this item.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                        <a href="{% if item %}{% url 'inventory_detail' item.pk %}{% else %}{% url 'inventory_list' %}{% endif %}"
+                            class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Cancel & Return
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>
+                            {% if item %}Update Inventory Item{% else %}Create Inventory Item{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        // Initialize Select2 for better dropdowns
+        $('.form-select').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Select an option',
+            allowClear: true
+        });
+
+        // Auto-calculate total price with real-time updates
+        function calculateTotal() {
+            const quantity = parseFloat($('#id_quantity').val()) || 0;
+            const price = parseFloat($('#id_price_per_unit').val()) || 0;
+            const total = quantity * price;
+
+            const totalDisplay = $('#total-price-display');
+
+            if (total > 0) {
+                totalDisplay.text('₦' + total.toFixed(2));
+                totalDisplay.removeClass('text-muted').addClass('text-success');
+            } else {
+                totalDisplay.text('₦0.00');
+                totalDisplay.removeClass('text-success').addClass('text-muted');
+            }
+        }
+
+        // Calculate on input change
+        $('#id_quantity, #id_price_per_unit').on('input', calculateTotal);
+
+        // Initialize calculation on page load
+        calculateTotal();
+
+        // Enhanced form validation
+        $('form').on('submit', function (e) {
+            const requiredFields = $('.required-field');
+            let isValid = true;
+
+            requiredFields.each(function () {
+                const field = $(this).closest('.field-group').find('input, select, textarea');
+                if (!field.val().trim()) {
+                    field.addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    field.removeClass('is-invalid').addClass('is-valid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                // Scroll to first error
+                $('html, body').animate({
+                    scrollTop: $('.is-invalid').first().offset().top - 100
+                }, 500);
+
+                // Show alert
+                if (!$('.alert-danger').length) {
+                    const alert = $(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Please fill in all required fields marked with *</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    $('.card-body').prepend(alert);
+                }
+            }
+        });
+
+        // Real-time validation for required fields
+        $('.required-field').closest('.field-group').find('input, select, textarea').on('blur', function () {
+            if ($(this).val().trim()) {
+                $(this).removeClass('is-invalid').addClass('is-valid');
+            } else {
+                $(this).removeClass('is-valid').addClass('is-invalid');
+            }
+        });
+
+        // Image preview functionality
+        $('#id_image').on('change', function (e) {
+            const file = e.target.files[0];
+            const preview = $(this).closest('.image-preview');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.html(`
+                        <img src="${e.target.result}" alt="Image preview" class="img-thumbnail rounded" style="max-height: 200px;">
+                        <div class="mt-2">
+                            <small class="text-muted">${file.name}</small>
+                            <br>
+                            <small class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</small>
+                        </div>
+                        ${$('#id_image')[0].outerHTML}
+                    `);
+                    // Re-attach change event to new file input
+                    $('#id_image').on('change', arguments.callee);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+</script>
+{% endblock %}
