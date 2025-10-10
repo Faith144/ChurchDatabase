@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from .models import Assembly, Unit, Member, Cell, Admin
-from .forms import MemberForm, AssemblyForm, UnitForm, CellForm, AdminForm
+from .forms import MemberForm, AssemblyForm, UnitForm, CellForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
@@ -1196,80 +1196,3 @@ def assembly_detail_modal(request, pk):
         return JsonResponse({"html": html})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
-@login_required
-def create_admin(request):
-    """Create a new admin member"""
-    try:
-        if request.method == "POST":
-            form = AdminForm(request.POST)
-            if form.is_valid():
-                form.save()
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "message": f"Admin {form.member.first_name} - {form.member.last_name} created successfully!",
-                    }
-                )
-        else:
-            return JsonResponse(
-                {"success": False, "error": "Only POST method allowed"}, status=405
-            )
-
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=500)
-    
-def delete_admin(request, pk):
-    """Delete an admin member"""
-    try:
-        admin_account = get_object_or_404(Admin, pk=pk)
-
-        if request.method == "POST":
-            admin_name = f"{admin_account.member.first_name} {admin_account.member.last_name}"
-            admin_account.delete()
-            return JsonResponse(
-                {
-                    "success": True,
-                    "message": f"Admin {admin_name} deleted successfully!",
-                }
-            )
-        else:
-            return JsonResponse(
-                {"success": False, "error": "Only POST method allowed"}, status=405
-            )
-
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=500)
-    
-def update_admin(request, pk):
-    """Update an admin member"""
-    try:
-        admin_account = get_object_or_404(Admin, pk=pk)
-
-        if request.method == "POST":
-            form = AdminForm(request.POST, instance=admin_account)
-            if form.is_valid():
-                form.save()
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "message": f"Admin {form.member.first_name} - {form.member.last_name} updated successfully!",
-                    }
-                )
-            else:
-                return JsonResponse(
-                    {"success": False, "errors": form.errors.as_json()}, status=400
-                )
-        else:
-            return JsonResponse(
-                {"success": False, "error": "Only POST method allowed"}, status=405
-            )
-
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=500)
-    
-def admin_list(request):
-    """List all admin members"""
-    admins = Admin.objects.select_related('member').all().order_by('member__first_name', 'member__last_name')
-    context = {'admins': admins}
-    return render(request, 'admins/admin_list.html', context)

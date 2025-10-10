@@ -668,14 +668,3 @@ class InventoryForm(forms.ModelForm):
         if price and price < 0:
             raise forms.ValidationError("Price cannot be negative.")
         return price
-    
-class AdminForm(forms.ModelForm):
-    class Meta:
-        model = Admin
-        fields = ['member','assembly','level','cell']
-        widgets = {
-            "member":forms.Select(attrs={'class':'form-select'}),
-            "assembly":forms.Select(attrs={'class':'form-select'}),
-            "level":forms.Select(attrs={'class':'form-control'}),
-            "cell":forms.Select(attrs={'class':'form-control'})
-        }

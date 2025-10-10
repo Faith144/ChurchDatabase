@@ -5,32 +5,51 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 col-md-10">
-            <!-- Page Header -->
-            <div class="row mb-4">
-                <div class="col">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="h3 mb-2">{{ title }}</h1>
-                            <nav aria-label="breadcrumb">
-                                <ol class="breadcrumb">
-                                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
-                                    <li class="breadcrumb-item"><a href="{% url 'admin_list' %}">Admins</a></li>
-                                    <li class="breadcrumb-item active">{{ title }}</li>
-                                </ol>
-                            </nav>
-                        </div>
-                        <a href="{% url 'admin_list' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Back to List
-                        </a>
-                    </div>
-                </div>
-            </div>
+    <!-- Page Header -->
+    <div
+        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div>
+            <h1 class="h2">{{ title }}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'admin_list' %}">Admins</a></li>
+                    <li class="breadcrumb-item active">{{ title }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'admin_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to List
+            </a>
+        </div>
+    </div>
 
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messages mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas 
+                    {% if message.tags == 'success' %}fa-check-circle
+                    {% elif message.tags == 'error' %}fa-exclamation-circle
+                    {% elif message.tags == 'warning' %}fa-exclamation-triangle
+                    {% else %}fa-info-circle{% endif %}
+                    me-2"></i>
+                <span>{{ message }}</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
             <!-- Form Card -->
-            <div class="card border-0">
-                <div class="card-header bg-white border-0">
+            <div class="card">
+                <div class="card-header">
                     <h5 class="card-title mb-0">Admin Information</h5>
                     <p class="text-muted mb-0">Fill in the details below to {{ title|lower }}.</p>
                 </div>
@@ -147,8 +166,8 @@
 
             <!-- Existing Admin Info (for update forms) -->
             {% if admin %}
-            <div class="card border-0 mt-4">
-                <div class="card-header bg-white border-0">
+            <div class="card mt-4">
+                <div class="card-header">
                     <h5 class="card-title mb-0">Current Account Information</h5>
                 </div>
                 <div class="card-body">
@@ -194,104 +213,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    $(document).ready(function () {
-        // Show/hide cell field based on level selection
-        function toggleCellField() {
-            const level = $('#id_level').val();
-            const cellField = $('#id_cell').closest('.mb-3');
-
-            if (level === 'Cell') {
-                cellField.show();
-                $('#id_cell').prop('required', true);
-            } else {
-                cellField.hide();
-                $('#id_cell').prop('required', false);
-                $('#id_cell').val('');
-            }
-        }
-
-        // Initial toggle
-        toggleCellField();
-
-        // Toggle on change
-        $('#id_level').change(toggleCellField);
-
-        // Filter cells based on selected assembly
-        function filterCells() {
-            const assemblyId = $('#id_assembly').val();
-            const cellSelect = $('#id_cell');
-
-            if (assemblyId) {
-                // Show loading state
-                cellSelect.prop('disabled', true);
-
-                // AJAX call to get cells for assembly
-                $.ajax({
-                    url: '{% url "ajax_get_cells" %}',
-                    data: {
-                        'assembly_id': assemblyId
-                    },
-                    success: function (data) {
-                        cellSelect.empty();
-                        cellSelect.append('<option value="">Select a cell</option>');
-
-                        $.each(data, function (index, cell) {
-                            cellSelect.append(
-                                $('<option></option>').attr('value', cell.id).text(cell.name)
-                            );
-                        });
-
-                        cellSelect.prop('disabled', false);
-                    },
-                    error: function () {
-                        cellSelect.prop('disabled', false);
-                    }
-                });
-            } else {
-                cellSelect.empty();
-                cellSelect.append('<option value="">Select a cell</option>');
-            }
-        }
-
-        // Filter cells when assembly changes
-        $('#id_assembly').change(filterCells);
-
-        // Check if member already has admin account
-        $('#id_member').change(function () {
-            const memberId = $(this).val();
-
-            if (memberId) {
-                $.ajax({
-                    url: '{% url "ajax_check_member_admin" %}',
-                    data: {
-                        'member_id': memberId
-                    },
-                    success: function (data) {
-                        if (data.has_admin) {
-                            // Show warning if member already has admin account
-                            const warning = `
-                                <div class="alert alert-warning mt-2">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    This member already has an admin account.
-                                </div>
-                            `;
-
-                            // Remove existing warning
-                            $('#member-warning').remove();
-
-                            // Add new warning
-                            $('#id_member').after(`<div id="member-warning">${warning}</div>`);
-                        } else {
-                            $('#member-warning').remove();
-                        }
-                    }
-                });
-            }
-        });
-    });
-</script>
 {% endblock %}

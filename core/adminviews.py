@@ -1,26 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.core.paginator import Paginator
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse
 from django.db.models import Q
-from django.views.generic import (
-    ListView,
-    DetailView,
-    CreateView,
-    UpdateView,
-    DeleteView,
-)
-from django.urls import reverse_lazy
+from django.views.generic import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import Admin, Member, Assembly, Cell
-from .adminforms import (
-    SuperAdminCreationForm,
-    SuperAdminUpdateForm,
-    AdminLevelChangeForm,
-    AdminFilterForm,
-)
+from .adminforms import AdminForm, AdminLevelChangeForm, AdminFilterForm
 
 
 class SuperAdminRequiredMixin(LoginRequiredMixin):
@@ -41,56 +28,6 @@ class SuperAdminRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-# Dashboard and Overview Views
-@login_required
-def admin_dashboard(request):
-    """Dashboard for admins - shows different content based on admin level"""
-    try:
-        admin_profile = request.user.admin_account
-
-        context = {
-            "admin": admin_profile,
-        }
-
-        # Different context based on admin level
-        if admin_profile.is_superadmin:
-            context.update(
-                {
-                    "total_admins": Admin.objects.filter(
-                        assembly=admin_profile.assembly
-                    ).count(),
-                    "total_members": Member.objects.filter(
-                        assembly=admin_profile.assembly
-                    ).count(),
-                    "recent_admins": Admin.objects.filter(
-                        assembly=admin_profile.assembly
-                    ).order_by("-id")[:5],
-                }
-            )
-        elif admin_profile.is_cell_admin:
-            context.update(
-                {
-                    "managed_members": admin_profile.get_managed_members().count(),
-                    "cell": admin_profile.cell,
-                }
-            )
-        elif admin_profile.is_moderator:
-            context.update(
-                {
-                    "total_members": Member.objects.filter(
-                        assembly=admin_profile.assembly
-                    ).count(),
-                }
-            )
-
-        return render(request, "admins/dashboard.html", context)
-
-    except Admin.DoesNotExist:
-        messages.error(request, "Admin profile not found.")
-        return redirect("home")
-
-
-# Admin Management Views
 class AdminListView(SuperAdminRequiredMixin, ListView):
     """List all admins in the system - Super Admin only"""
 
@@ -100,14 +37,14 @@ class AdminListView(SuperAdminRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = Admin.objects.select_related(
-            "member", "assembly", "cell", "user_account"
-        ).filter(assembly=self.request.user.admin_account.assembly)
+        # Show all admins, not filtered by current user's assembly
+        queryset = Admin.objects.all()
 
         # Apply filters
         level = self.request.GET.get("level")
         search = self.request.GET.get("search")
         cell_id = self.request.GET.get("cell")
+        assembly_id = self.request.GET.get("assembly")
 
         if level:
             queryset = queryset.filter(level=level)
@@ -116,16 +53,22 @@ class AdminListView(SuperAdminRequiredMixin, ListView):
                 Q(member__first_name__icontains=search)
                 | Q(member__last_name__icontains=search)
                 | Q(member__email__icontains=search)
+                | Q(user_account__username__icontains=search)
             )
         if cell_id:
             queryset = queryset.filter(cell_id=cell_id)
+        if assembly_id:
+            queryset = queryset.filter(assembly_id=assembly_id)
 
-        return queryset.order_by("member__first_name", "member__last_name")
+        return queryset.select_related(
+            "member", "assembly", "cell", "user_account"
+        ).order_by("member__first_name", "member__last_name")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["filter_form"] = AdminFilterForm(self.request.GET)
         context["total_count"] = self.get_queryset().count()
+        context["assemblies"] = Assembly.objects.all()  # Add assemblies for filter
         return context
 
 
@@ -141,30 +84,22 @@ def admin_create(request):
             messages.error(
                 request, "Only super administrators can create new admin accounts."
             )
-            return redirect("admin_dashboard")
+            return redirect("dashboard")
 
         if request.method == "POST":
-            form = SuperAdminCreationForm(request.POST, current_user=request.user)
+            form = AdminForm(request.POST, current_user=request.user)
             if form.is_valid():
                 admin = form.save()
-
-                # Log the action
                 messages.success(
                     request,
                     f"Admin account created successfully for {admin.get_full_name()}. "
                     f"Username: {admin.user_account.username}",
                 )
-
-                # Optional: Send credentials via email (you can implement this)
-                # send_admin_credentials(admin, request)
-
                 return redirect("admin_list")
         else:
-            # Pre-fill assembly with current admin's assembly
+            # Pre-fill assembly with current admin's assembly as default
             initial_data = {"assembly": request.user.admin_account.assembly}
-            form = SuperAdminCreationForm(
-                initial=initial_data, current_user=request.user
-            )
+            form = AdminForm(initial=initial_data, current_user=request.user)
 
         context = {
             "form": form,
@@ -181,7 +116,6 @@ def admin_create(request):
 def admin_update(request, pk):
     """Update an existing admin account - Super Admin only"""
     try:
-        # Check if current user is super admin
         if (
             not hasattr(request.user, "admin_account")
             or not request.user.admin_account.is_superadmin
@@ -189,18 +123,12 @@ def admin_update(request, pk):
             messages.error(
                 request, "Only super administrators can update admin accounts."
             )
-            return redirect("admin_dashboard")
+            return redirect("dashboard")
 
-        admin = get_object_or_404(
-            Admin.objects.select_related("member", "assembly", "cell", "user_account"),
-            pk=pk,
-            assembly=request.user.admin_account.assembly,  # Only admins from same assembly
-        )
+        admin = get_object_or_404(Admin, pk=pk)
 
         if request.method == "POST":
-            form = SuperAdminUpdateForm(
-                request.POST, instance=admin, current_user=request.user
-            )
+            form = AdminForm(request.POST, instance=admin, current_user=request.user)
             if form.is_valid():
                 form.save()
                 messages.success(
@@ -209,7 +137,7 @@ def admin_update(request, pk):
                 )
                 return redirect("admin_list")
         else:
-            form = SuperAdminUpdateForm(instance=admin, current_user=request.user)
+            form = AdminForm(instance=admin, current_user=request.user)
 
         context = {
             "form": form,
@@ -226,24 +154,21 @@ def admin_update(request, pk):
 @login_required
 def admin_detail(request, pk):
     """View admin details"""
-    admin = get_object_or_404(
-        Admin.objects.select_related("member", "assembly", "cell", "user_account"),
-        pk=pk,
-    )
+    admin = get_object_or_404(Admin, pk=pk)
 
-    # Check permissions - users can view their own profile or super admins can view any
     current_user_admin = getattr(request.user, "admin_account", None)
     if not current_user_admin or (
         current_user_admin != admin and not current_user_admin.is_superadmin
     ):
         messages.error(request, "You don't have permission to view this admin profile.")
-        return redirect("admin_dashboard")
+        return redirect("dashboard")
+
+    # Get managed members without invalid select_related
+    managed_members = admin.get_managed_members()
 
     context = {
         "admin_profile": admin,
-        "managed_members": admin.get_managed_members().select_related("cell")[
-            :10
-        ],  # Recent members
+        "managed_members": managed_members[:10],
     }
 
     return render(request, "admins/admin_detail.html", context)
@@ -253,7 +178,6 @@ def admin_detail(request, pk):
 def admin_change_level(request, pk):
     """Change admin level - Super Admin only"""
     try:
-        # Check if current user is super admin
         if (
             not hasattr(request.user, "admin_account")
             or not request.user.admin_account.is_superadmin
@@ -261,18 +185,12 @@ def admin_change_level(request, pk):
             messages.error(
                 request, "Only super administrators can change admin levels."
             )
-            return redirect("admin_dashboard")
+            return redirect("dashboard")
 
-        admin = get_object_or_404(
-            Admin.objects.select_related("member", "assembly", "cell"),
-            pk=pk,
-            assembly=request.user.admin_account.assembly,
-        )
+        admin = get_object_or_404(Admin, pk=pk)
 
         if request.method == "POST":
-            form = AdminLevelChangeForm(
-                request.POST, instance=admin, current_user=request.user
-            )
+            form = AdminLevelChangeForm(request.POST, instance=admin)
             if form.is_valid():
                 form.save()
                 messages.success(
@@ -280,7 +198,7 @@ def admin_change_level(request, pk):
                 )
                 return redirect("admin_list")
         else:
-            form = AdminLevelChangeForm(instance=admin, current_user=request.user)
+            form = AdminLevelChangeForm(instance=admin)
 
         context = {
             "form": form,
@@ -298,7 +216,6 @@ def admin_change_level(request, pk):
 def admin_delete(request, pk):
     """Delete an admin account - Super Admin only"""
     try:
-        # Check if current user is super admin
         if (
             not hasattr(request.user, "admin_account")
             or not request.user.admin_account.is_superadmin
@@ -306,13 +223,9 @@ def admin_delete(request, pk):
             messages.error(
                 request, "Only super administrators can delete admin accounts."
             )
-            return redirect("admin_dashboard")
+            return redirect("dashboard")
 
-        admin = get_object_or_404(
-            Admin.objects.select_related("member"),
-            pk=pk,
-            assembly=request.user.admin_account.assembly,
-        )
+        admin = get_object_or_404(Admin, pk=pk)
 
         if request.method == "POST":
             admin_name = admin.get_full_name()

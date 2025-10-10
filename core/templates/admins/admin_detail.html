@@ -6,40 +6,59 @@
 {% block content %}
 <div class="container-fluid">
     <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-2">Admin Details</h1>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
-                            <li class="breadcrumb-item"><a href="{% url 'admin_list' %}">Admins</a></li>
-                            <li class="breadcrumb-item active">Details</li>
-                        </ol>
-                    </nav>
-                </div>
-                <div class="btn-group">
-                    <a href="{% url 'admin_update' admin_profile.pk %}" class="btn btn-warning">
-                        <i class="fas fa-edit me-2"></i>Edit
-                    </a>
-                    <a href="{% url 'admin_change_level' admin_profile.pk %}" class="btn btn-info">
-                        <i class="fas fa-level-up-alt me-2"></i>Change Level
-                    </a>
-                    <a href="{% url 'admin_list' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back
-                    </a>
-                </div>
+    <div
+        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div>
+            <h1 class="h2">Admin Details</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'admin_list' %}">Admins</a></li>
+                    <li class="breadcrumb-item active">Details</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group">
+                <a href="{% url 'admin_update' admin_profile.pk %}" class="btn btn-warning">
+                    <i class="fas fa-edit me-2"></i>Edit
+                </a>
+                <a href="{% url 'admin_change_level' admin_profile.pk %}" class="btn btn-info">
+                    <i class="fas fa-level-up-alt me-2"></i>Change Level
+                </a>
+                <a href="{% url 'admin_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
             </div>
         </div>
     </div>
 
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messages mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas 
+                    {% if message.tags == 'success' %}fa-check-circle
+                    {% elif message.tags == 'error' %}fa-exclamation-circle
+                    {% elif message.tags == 'warning' %}fa-exclamation-triangle
+                    {% else %}fa-info-circle{% endif %}
+                    me-2"></i>
+                <span>{{ message }}</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="row">
-        <!-- Admin Information -->
+        <!-- Left Column - Main Content -->
         <div class="col-lg-8">
             <!-- Basic Information Card -->
-            <div class="card border-0 mb-4">
-                <div class="card-header bg-white border-0">
+            <div class="card mb-4">
+                <div class="card-header">
                     <h5 class="card-title mb-0">Basic Information</h5>
                 </div>
                 <div class="card-body">
@@ -47,8 +66,6 @@
                         <div class="col-md-3 text-center mb-4">
                             <div
                                 class="avatar-lg bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3">
-                                <span class="text-white fw-bold display-6">{{ admin_profile.member.first_name|first }}{{
-                                    admin_profile.member.last_name|first }}</span>
                             </div>
                             <h5>{{ admin_profile.get_full_name }}</h5>
                             <span
@@ -94,8 +111,7 @@
                                         </tr>
                                         <tr>
                                             <th class="text-muted">Last Login:</th>
-                                            <td>{{ admin_profile.user_account.last_login|date:"M d, Y
-                                                H:i"|default:"Never" }}</td>
+                                            <td>{{ admin_profile.user_account.last_login|default_if_none:"Never"|date:"M d, Y H:i" }}</td>
                                         </tr>
                                     </table>
                                 </div>
@@ -105,105 +121,82 @@
                 </div>
             </div>
 
-            <!-- Permissions Card -->
-            <div class="card border-0 mb-4">
-                <div class="card-header bg-white border-0">
-                    <h5 class="card-title mb-0">Permissions & Access</h5>
+            <!-- Managed Members Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Managed Members</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Administrative Permissions</h6>
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <i
-                                        class="fas {% if admin_profile.is_superadmin %}fa-check text-success{% else %}fa-times text-danger{% endif %} me-2"></i>
-                                    Super Admin Access
-                                </li>
-                                <li class="mb-2">
-                                    <i
-                                        class="fas {% if admin_profile.can_manage_members %}fa-check text-success{% else %}fa-times text-danger{% endif %} me-2"></i>
-                                    Manage Members
-                                </li>
-                                <li class="mb-2">
-                                    <i
-                                        class="fas {% if admin_profile.can_manage_finances %}fa-check text-success{% else %}fa-times text-danger{% endif %} me-2"></i>
-                                    Manage Finances
-                                </li>
-                                <li class="mb-2">
-                                    <i
-                                        class="fas {% if admin_profile.can_manage_events %}fa-check text-success{% else %}fa-times text-danger{% endif %} me-2"></i>
-                                    Manage Events
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>System Access</h6>
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <i
-                                        class="fas {% if admin_profile.can_manage_content %}fa-check text-success{% else %}fa-times text-danger{% endif %} me-2"></i>
-                                    Manage Content
-                                </li>
-                                <li class="mb-2">
-                                    <i
-                                        class="fas {% if admin_profile.has_permission.access_all_cells %}fa-check text-success{% else %}fa-times text-danger{% endif %} me-2"></i>
-                                    Access All Cells
-                                </li>
-                                <li class="mb-2">
-                                    <i
-                                        class="fas {% if admin_profile.has_permission.manage_users %}fa-check text-success{% else %}fa-times text-danger{% endif %} me-2"></i>
-                                    Manage Users
-                                </li>
-                                <li class="mb-2">
-                                    <i
-                                        class="fas {% if admin_profile.has_permission.system_config %}fa-check text-success{% else %}fa-times text-danger{% endif %} me-2"></i>
-                                    System Configuration
-                                </li>
-                            </ul>
-                        </div>
+                    {% if managed_members %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in managed_members %}
+                                <tr>
+                                    <td>{{ member.first_name }} {{ member.last_name }}</td>
+                                    <td>{{ member.email|default:"-" }}</td>
+                                    <td>{{ member.phone|default:"-" }}</td>
+                                    <td>
+                                        <span
+                                            class="badge {% if member.membership_status == 'ACTIVE' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ member.membership_status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No members are currently managed by this admin.</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Sidebar Information -->
+        <!-- Right Column - Sidebar -->
         <div class="col-lg-4">
             <!-- Account Status Card -->
-            <div class="card border-0 mb-4">
-                <div class="card-header bg-white border-0">
+            <div class="card mb-4">
+                <div class="card-header">
                     <h5 class="card-title mb-0">Account Status</h5>
                 </div>
-                <div class="card-body">
-                    <div class="text-center">
-                        <div class="mb-3">
-                            {% if admin_profile.user_account.is_active %}
-                            <i class="fas fa-check-circle fa-3x text-success"></i>
-                            {% else %}
-                            <i class="fas fa-times-circle fa-3x text-danger"></i>
-                            {% endif %}
-                        </div>
-                        <h5>
-                            {% if admin_profile.user_account.is_active %}
-                            <span class="badge bg-success">Active</span>
-                            {% else %}
-                            <span class="badge bg-danger">Inactive</span>
-                            {% endif %}
-                        </h5>
-                        <p class="text-muted mb-0">
-                            {% if admin_profile.user_account.is_active %}
-                            This admin account is active and can access the system.
-                            {% else %}
-                            This admin account is inactive and cannot access the system.
-                            {% endif %}
-                        </p>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        {% if admin_profile.user_account.is_active %}
+                        <i class="fas fa-check-circle fa-3x text-success"></i>
+                        {% else %}
+                        <i class="fas fa-times-circle fa-3x text-danger"></i>
+                        {% endif %}
                     </div>
+                    <h5>
+                        {% if admin_profile.user_account.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inactive</span>
+                        {% endif %}
+                    </h5>
+                    <p class="text-muted mb-0">
+                        {% if admin_profile.user_account.is_active %}
+                        This admin account is active and can access the system.
+                        {% else %}
+                        This admin account is inactive and cannot access the system.
+                        {% endif %}
+                    </p>
                 </div>
             </div>
 
             <!-- Quick Actions Card -->
-            <div class="card border-0">
-                <div class="card-header bg-white border-0">
+            <div class="card">
+                <div class="card-header">
                     <h5 class="card-title mb-0">Quick Actions</h5>
                 </div>
                 <div class="card-body">
@@ -218,6 +211,42 @@
                             <i class="fas fa-trash me-2"></i>Delete Admin
                         </a>
                     </div>
+                </div>
+            </div>
+
+            <!-- Admin Permissions Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Permissions</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i
+                                class="fas {% if admin_profile.is_superadmin %}fa-check text-success{% else %}fa-times text-muted{% endif %} me-2"></i>
+                            Super Admin Access
+                        </li>
+                        <li class="mb-2">
+                            <i
+                                class="fas {% if admin_profile.is_superadmin or admin_profile.is_moderator %}fa-check text-success{% else %}fa-times text-muted{% endif %} me-2"></i>
+                            Manage All Members
+                        </li>
+                        <li class="mb-2">
+                            <i
+                                class="fas {% if admin_profile.is_superadmin %}fa-check text-success{% else %}fa-times text-muted{% endif %} me-2"></i>
+                            Manage Other Admins
+                        </li>
+                        <li class="mb-2">
+                            <i
+                                class="fas {% if admin_profile.is_superadmin or admin_profile.is_moderator %}fa-check text-success{% else %}fa-times text-muted{% endif %} me-2"></i>
+                            Manage Content
+                        </li>
+                        <li>
+                            <i
+                                class="fas {% if admin_profile.is_superadmin %}fa-check text-success{% else %}fa-times text-muted{% endif %} me-2"></i>
+                            System Configuration
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>

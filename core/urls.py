@@ -1,10 +1,11 @@
 from django.urls import path
 from . import views
 from . import commiteeview as com_views
-from . import inventoryviews as inv_views  # Import inventory views
-from . import adminviews
+from . import inventoryviews as inv_views
+from . import adminviews  # Make sure this imports your admin views
 
 urlpatterns = [
+    path("", views.home, name="home"),
     # Authentication URLs
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
@@ -172,17 +173,16 @@ urlpatterns = [
         inv_views.inventory_detail_modal,
         name="inventory_detail_modal",
     ),
-    # ==================== ADMIN URLS ====================
-    # path("dashboard/", adminviews.admin_dashboard, name="dashboard"),
-    # Admin Management
-    path("", adminviews.AdminListView.as_view(), name="admin_list"),
-    path("create/", adminviews.admin_create, name="admin_create"),
-    path("<int:pk>/", adminviews.admin_detail, name="admin_detail"),
-    path("<int:pk>/update/", adminviews.admin_update, name="admin_update"),
+    # ==================== ADMIN MANAGEMENT URLS ====================
+    # Admin List and CRUD operations
+    path("admins/", adminviews.AdminListView.as_view(), name="admin_list"),
+    path("admins/create/", adminviews.admin_create, name="admin_create"),
+    path("admins/<int:pk>/", adminviews.admin_detail, name="admin_detail"),
+    path("admins/<int:pk>/update/", adminviews.admin_update, name="admin_update"),
     path(
-        "<int:pk>/change-level/",
+        "admins/<int:pk>/change-level/",
         adminviews.admin_change_level,
         name="admin_change_level",
     ),
-    path("<int:pk>/delete/", adminviews.admin_delete, name="admin_delete"),
+    path("admins/<int:pk>/delete/", adminviews.admin_delete, name="admin_delete"),
 ]
